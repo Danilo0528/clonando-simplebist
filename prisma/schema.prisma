@@ -1,0 +1,158 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     Int       @id @default(autoincrement())
+  username              String    @unique
+  email                 String    @unique
+  passwordHash          String
+  level                 Int       @default(1)
+  xp                    Int       @default(0)
+  tokenBalance          Float     @default(0)
+  boundTokenBalance     Float     @default(0)
+  lastFaucetClaim       DateTime?
+  hashpowerVirtual      Float     @default(0)
+  energyPoints          Int       @default(100)
+  energyRegenTimestamp  DateTime  @default(now())
+  lockedUntil           DateTime?
+  failedAttempts        Int       @default(0)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Relations
+  activityLogs              ActivityLog[]
+  miningPoolContributions   MiningPoolContribution[]
+  withdrawals               Withdrawal[]
+  ads                       Ad[]
+  shortlinks                Shortlink[]
+  suspiciousActivities      SuspiciousActivity[]
+  securityLogs              SecurityLog[]
+}
+
+model ActivityLog {
+  id                Int       @id @default(autoincrement())
+  userId            Int
+  user              User      @relation(fields: [userId], references: [id])
+  activityType      String    // Values: 'faucet', 'ptc', 'offerwall', 'mining', 'withdrawal'
+  amountTokens      Float?
+  amountBoundTokens Float?
+  metadata          Json?     // Additional data specific to activity
+  createdAt         DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model MiningPool {
+  id                Int       @id @default(autoincrement())
+  poolIdentifier    String    @unique
+  startTime         DateTime
+  endTime           DateTime
+  totalRewards      Float     @default(0)
+  totalHashpower    Float     @default(0)
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+
+  // Relations
+  contributions     MiningPoolContribution[]
+}
+
+model MiningPoolContribution {
+  id                Int       @id @default(autoincrement())
+  userId            Int
+  user              User      @relation(fields: [userId], references: [id])
+  poolId            Int
+  miningPool        MiningPool @relation(fields: [poolId], references: [id])
+  contributedHashpower Float
+  rewardShare       Float?
+  claimed           Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+
+  @@index([userId])
+  @@index([poolId])
+}
+
+model Shortlink {
+  id            Int       @id @default(autoincrement())
+  code          String    @unique  // The short code (e.g., abc123)
+  originalUrl   String    // The original long URL
+  visits        Int       @default(0)
+  earnings      Float     @default(0)  // Total earnings from this shortlink
+  createdBy     Int       // User who created the shortlink
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  creator       User      @relation(fields: [createdBy], references: [id])
+}
+
+model Ad {
+  id              Int       @id @default(autoincrement())
+  title           String
+  description     String
+  url             String    // The URL to redirect the user to
+  reward          Float     @default(0.005)
+  isActive        Boolean   @default(true)
+  views           Int       @default(0)
+  clicks          Int       @default(0)
+  maxViews        Int       @default(1000)  // Max views before ad stops showing
+  advertiserId    Int?      // Optional reference to a user who advertised
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  advertiser      User?     @relation(fields: [advertiserId], references: [id])
+}
+
+model SuspiciousActivity {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id])
+  activityType  String    // Type of activity that was suspicious
+  reason        String    // Reason for marking as suspicious
+  metadata      Json?     // Additional metadata about the activity
+  detectedAt    DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model SecurityLog {
+  id          Int       @id @default(autoincrement())
+  userId      Int?
+  user        User?     @relation(fields: [userId], references: [id])
+  eventType   String    // Type of security event
+  details     Json      // Details about the event
+  severity    String    // info, warning, error, critical
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model Withdrawal {
+  id                Int       @id @default(autoincrement())
+  userId            Int
+  user              User      @relation(fields: [userId], references: [id])
+  amount            Float
+  cryptoCurrency    String    // Values: BTC, LTC, DOGE, ADA, BCH, DASH
+  address           String
+  status            String    @default("pending") // Values: 'pending', 'processing', 'completed', 'failed'
+  transactionHash   String?
+  createdAt         DateTime  @default(now())
+  processedAt       DateTime?
+
+  @@index([userId])
+}
