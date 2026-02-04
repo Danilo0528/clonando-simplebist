@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getUserFromToken, updateUser } from '../../../lib/auth'; // Assuming you have these helpers
+import { getUserFromToken, updateUser } from '../../../lib/auth'; 
 
-// The amount of energy consumed and XP gained per mining tick
-const ENERGY_COST = 10;
-const XP_GAIN = 50;
+const ENERGY_COST_PER_UNIT = 1;
+const XP_GAIN_PER_UNIT = 5;
 
 export async function POST(req) {
   const token = req.headers.get('authorization')?.split(' ')[1];
@@ -18,27 +17,29 @@ export async function POST(req) {
       return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
     }
 
+    const { amount } = await req.json();
+    if (!amount || amount <= 0) {
+      return NextResponse.json({ message: 'Invalid mining amount' }, { status: 400 });
+    }
+
     let { level, xp, energyPoints } = user;
 
-    // 1. Check for sufficient energy
-    if (energyPoints < ENERGY_COST) {
+    const totalEnergyCost = ENERGY_COST_PER_UNIT * amount;
+    if (energyPoints < totalEnergyCost) {
       return NextResponse.json({ message: 'Not enough energy to mine.' }, { status: 400 });
     }
 
-    // 2. Reduce energy and increase XP
-    energyPoints -= ENERGY_COST;
-    xp += XP_GAIN;
+    const totalXpGain = XP_GAIN_PER_UNIT * amount;
+    energyPoints -= totalEnergyCost;
+    xp += totalXpGain;
 
-    // 3. Check for level up
     const xpNeededForNextLevel = level * 1000;
     if (xp >= xpNeededForNextLevel) {
-      level += 1; // Level up!
-      xp -= xpNeededForNextLevel; // Reset XP for the new level
-      // Optional: Fully or partially refill energy on level up
+      level += 1; 
+      xp -= xpNeededForNextLevel; 
       energyPoints = level * 100; 
     }
 
-    // 4. Update the user in the database
     const updatedUserData = { 
         level, 
         xp, 
@@ -47,10 +48,9 @@ export async function POST(req) {
 
     await updateUser(user.id, updatedUserData);
 
-    // 5. Return a success response
     return NextResponse.json({
       message: 'Mining successful!',
-      xpGained: XP_GAIN,
+      xpGained: totalXpGain,
       newEnergy: energyPoints,
       newXP: xp,
       newLevel: level,

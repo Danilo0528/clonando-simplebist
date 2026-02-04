@@ -1,20 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useStats } from '../../context/StatsContext';
 import { FaBolt, FaStar } from 'react-icons/fa';
 
 const UserStatus = () => {
+    const { userData } = useStats();
     const [time, setTime] = useState(79);
-    const [energy, setEnergy] = useState(1937);
     const [isClient, setIsClient] = useState(false);
-    const maxEnergy = 3693;
+    const maxEnergy = 3693; // Valor máximo de energía
 
     useEffect(() => {
         setIsClient(true);
         const timer = setInterval(() => {
             setTime(prevTime => {
                 if (prevTime <= 1) {
-                    setEnergy(prev => Math.min(prev + 8, maxEnergy));
+                    // Aquí se debería llamar a una función para regenerar energía en el contexto
+                    // Por ahora, simulamos la regeneración
                     return 300;
                 }
                 return prevTime - 1;
@@ -29,11 +31,15 @@ const UserStatus = () => {
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
+    // Usamos la energía del contexto
+    const energy = userData?.balances?.energy || 0;
+    const calculatedPercentage = maxEnergy > 0 ? (energy / maxEnergy) * 100 : 0;
+
     return (
         <div className="p-3 border-b border-surface-700">
             {/* Level and Timer */}
             <div className="flex justify-between items-center mb-3">
-                <span className="font-bold text-lg text-white">Lv. 525</span>
+                <span className="font-bold text-lg text-white">Lv. {userData?.balances?.level || 1}</span>
                 <span className="flex items-center text-yellow-400 font-semibold text-sm">
                     <FaBolt className="mr-1" /> {formatTime(time)}
                 </span>
@@ -52,7 +58,7 @@ const UserStatus = () => {
                             </span>
                         </div>
                         <div className="w-full bg-surface-800 rounded-full h-2">
-                            <div className="bg-green-500 h-2 rounded-full" style={{ width: `${(energy/maxEnergy)*100}%` }}></div>
+                            <div className="bg-green-500 h-2 rounded-full" style={{ width: `${calculatedPercentage}%` }}></div>
                         </div>
                     </div>
                 </div>
@@ -64,11 +70,15 @@ const UserStatus = () => {
                     </div>
                     <div className="w-full space-y-1">
                         <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-300 font-medium">10,161 / 11,325</span>
-                            <span className="text-gray-400 text-xs font-medium">TNL 1,164</span>
+                            <span className="text-gray-300 font-medium">
+                                {userData?.balances?.expForCurrentLevel || 0} / {userData?.balances?.expForNextLevel || 100}
+                            </span>
+                            <span className="text-gray-400 text-xs font-medium">
+                                TNL {userData?.balances?.expForNextLevel - userData?.balances?.expForCurrentLevel || 0}
+                            </span>
                         </div>
                         <div className="w-full bg-surface-800 rounded-full h-2">
-                            <div className="bg-blue-500 h-2 rounded-full" style={{ width: '89.7%' }}></div>
+                            <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${userData?.balances?.progressPercentage || 0}%` }}></div>
                         </div>
                     </div>
                 </div>

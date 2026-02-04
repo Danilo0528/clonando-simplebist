@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useStats } from '../../../context/StatsContext';
 import { FaHome, FaChevronRight, FaCoins, FaStar } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
@@ -55,6 +56,7 @@ const CaptchaModal = ({ onVerify, onCancel }) => (
 );
 
 export default function FaucetPage() {
+    const { claimFaucet } = useStats();
     const FAUCET_COOLDOWN = 30 * 60; // 30 minutes in seconds
     const [showCaptcha, setShowCaptcha] = useState(false);
     const [cooldown, setCooldown] = useState(0);
@@ -81,12 +83,19 @@ export default function FaucetPage() {
         setShowCaptcha(true);
     };
 
-    const handleVerifyClaim = () => {
+    const handleVerifyClaim = async () => {
         setShowCaptcha(false);
-        toast.success('Reward claimed successfully!');
-        const now = Date.now();
-        localStorage.setItem('lastFaucetClaim', now.toString());
-        setCooldown(FAUCET_COOLDOWN);
+
+        try {
+            const result = await claimFaucet();
+            toast.success(`Reward claimed successfully! +${result.reward.toFixed(2)} tokens`);
+            const now = Date.now();
+            localStorage.setItem('lastFaucetClaim', now.toString());
+            setCooldown(FAUCET_COOLDOWN);
+        } catch (error) {
+            toast.error('Error claiming reward. Please try again.');
+            console.error('Faucet claim error:', error);
+        }
     };
 
     const formatTime = (seconds) => {
