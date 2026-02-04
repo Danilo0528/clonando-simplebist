@@ -1,0 +1,39 @@
+'use client';
+
+import { FaArrowUp, FaChartLine } from 'react-icons/fa';
+
+const StatCard = ({ title, value, change, icon, color }) => (
+  <div className="text-center">
+    <div className="text-xs text-gray-400 mb-1">{title}</div>
+    <div className={`font-bold text-${color}-400`}>{value}</div>
+    <div className="text-xs text-green-500 flex items-center justify-center">
+        <FaArrowUp size={10} className="mr-1" />
+        {change}
+    </div>
+  </div>
+);
+
+export default function WelcomeBanner() {
+  return (
+    <div className="bg-[#252736] p-4 rounded-lg mb-4">
+        <div className="flex items-center justify-between mb-4">
+            <div>
+                <h1 className="font-bold text-xl text-white">Welcome back, Kirito0528!</h1>
+                <p className="text-gray-400 text-sm">Ready to earn some more?</p>
+            </div>
+        </div>
+
+        <div className="bg-gray-800/50 p-3 rounded-lg">
+            <h3 className="font-bold text-sm mb-3 flex items-center text-cyan-400">
+                <FaChartLine className="mr-2" /> This Month&apos;s Earnings
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <StatCard title="Offerwalls" value="1,203.50" change="+25.5%" color="cyan" />
+                <StatCard title="Faucet" value="512.25" change="+10.2%" color="yellow" />
+                <StatCard title="Referrals" value="89.10" change="+5.8%" color="green" />
+                <StatCard title="Hardware" value="2,150.75" change="+18.1%" color="purple" />
+            </div>
+      </div>
+    </div>
+  );
+}

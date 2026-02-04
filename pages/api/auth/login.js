@@ -1,34 +1,48 @@
-import { loginUser } from '../../../lib/auth';
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+
+const prisma = new PrismaClient();
+const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key'; // Use an environment variable for the secret key
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  try {
-    const { username, password } = req.body;
+  const { username, password } = req.body;
 
-    // Validate input
-    if (!username || !password) {
-      return res.status(400).json({ 
-        message: 'Username and password are required' 
-      });
+  try {
+    // Find the user by username or email
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { username: username },
+          { email: username },
+        ],
+      },
+    });
+
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const result = await loginUser({ username, password });
+    // Check if the password is correct
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
-    // Remove password from response
-    const { passwordHash, ...userWithoutPassword } = result.user;
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
 
-    res.status(200).json({ 
-      message: 'Login successful', 
-      user: userWithoutPassword,
-      token: result.token 
-    });
+    // Create a JWT token
+    const token = jwt.sign(
+      { userId: user.id, username: user.username },
+      SECRET_KEY,
+      { expiresIn: '1h' } // Token expires in 1 hour
+    );
+
+    res.status(200).json({ token });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(400).json({ 
-      message: error.message || 'Login failed' 
-    });
+    res.status(500).json({ message: 'An error occurred during login' });
   }
 }
