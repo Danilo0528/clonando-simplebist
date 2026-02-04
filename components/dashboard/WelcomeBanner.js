@@ -1,6 +1,5 @@
-'use client';
-
 import { FaArrowUp, FaChartLine } from 'react-icons/fa';
+import { getCurrentUser } from '../../lib/auth';
 
 const StatCard = ({ title, value, change, icon, color }) => (
   <div className="text-center">
@@ -13,12 +12,14 @@ const StatCard = ({ title, value, change, icon, color }) => (
   </div>
 );
 
-export default function WelcomeBanner() {
+export default async function WelcomeBanner() {
+  const user = await getCurrentUser();
+
   return (
     <div className="bg-[#252736] p-4 rounded-lg mb-4">
         <div className="flex items-center justify-between mb-4">
             <div>
-                <h1 className="font-bold text-xl text-white">Welcome back, Kirito0528!</h1>
+                <h1 className="font-bold text-xl text-white">Welcome back, {user.username}!</h1>
                 <p className="text-gray-400 text-sm">Ready to earn some more?</p>
             </div>
         </div>
