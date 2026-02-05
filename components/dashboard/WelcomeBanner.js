@@ -1,5 +1,8 @@
+'use client';
+
 import { FaArrowUp, FaChartLine } from 'react-icons/fa';
-import { getCurrentUser } from '../../lib/auth';
+import axios from '../../lib/axiosConfig';
+import { useEffect, useState } from 'react';
 
 const StatCard = ({ title, value, change, icon, color }) => (
   <div className="text-center">
@@ -12,14 +15,53 @@ const StatCard = ({ title, value, change, icon, color }) => (
   </div>
 );
 
-export default async function WelcomeBanner() {
-  const user = await getCurrentUser();
+export default function WelcomeBanner() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await axios.get('/api/auth/me');
+        const userData = response.data;
+        setUser(userData);
+      } catch (error) {
+        // Si el error es 401 (no autenticado), significa que no hay usuario logueado
+        // Esto es esperado cuando el usuario no ha iniciado sesión
+        if (error.response && error.response.status === 401) {
+          console.log("No user found, rendering generic welcome message.");
+        } else {
+          console.error('Failed to fetch user:', error);
+        }
+        // Dejar que el usuario permanezca como null si no está autenticado
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="bg-[#252736] p-4 rounded-lg mb-4">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="font-bold text-xl text-white">Loading...</h1>
+            <p className="text-gray-400 text-sm">Ready to earn some more?</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#252736] p-4 rounded-lg mb-4">
         <div className="flex items-center justify-between mb-4">
             <div>
-                <h1 className="font-bold text-xl text-white">Welcome back, {user.username}!</h1>
+                <h1 className="font-bold text-xl text-white">
+                  {user ? `Welcome back, ${user.username}!` : 'Welcome!'}
+                </h1>
                 <p className="text-gray-400 text-sm">Ready to earn some more?</p>
             </div>
         </div>

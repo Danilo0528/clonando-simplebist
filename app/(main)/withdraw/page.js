@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useStats } from '../../../context/StatsContext';
 
 export default function WithdrawPage() {
   const [balances, setBalances] = useState(null);
@@ -12,6 +13,7 @@ export default function WithdrawPage() {
   const [message, setMessage] = useState('');
   const [config, setConfig] = useState(null);
   const router = useRouter();
+  const { refreshUserData } = useStats(); // Import refresh function from context
 
   const fetchBalances = useCallback(async () => {
     try {
@@ -134,8 +136,10 @@ export default function WithdrawPage() {
       fetchBalances(); // Refresh balances
       fetchWithdrawalData(); // Refresh history
       
-      // Update balances in dashboard by triggering a refresh event
-      window.dispatchEvent(new Event('balanceUpdated'));
+      // Refresh user data to ensure all components have updated information
+      if (refreshUserData) {
+        await refreshUserData();
+      }
     } catch (error) {
       console.error('Error creating withdrawal:', error);
       setMessage('Error creating withdrawal request');

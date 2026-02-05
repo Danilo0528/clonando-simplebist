@@ -1,128 +1,98 @@
 'use client';
 
-import { FaHome, FaChevronRight, FaGift, FaPoll, FaMobileAlt, FaRocket, FaCheckCircle, FaHistory } from 'react-icons/fa';
+import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import { FaExclamationTriangle } from 'react-icons/fa';
+import Breadcrumb from '../../../components/Breadcrumb';
+import OfferwallCard from '../../../components/offerwalls/OfferwallCard';
 
-// Placeholder data to match the new design
-const offerwalls = [
-  {
-    id: 'timewall',
-    name: 'Timewall',
-    description: 'Complete tasks, surveys, and more. Wide variety of offers.',
-    reward: 'Up to 10,000 tokens',
-    icon: <FaPoll className="text-purple-400" />
-  },
-  {
-    id: 'ayetstudios',
-    name: 'Ayet-Studios',
-    description: 'Explore new apps and games. Get rewarded for playing.',
-    reward: 'Up to 5,000 tokens',
-    icon: <FaMobileAlt className="text-green-400" />
-  },
-  {
-    id: 'revlum',
-    name: 'Revlum',
-    description: 'High-paying surveys and exclusive app trials.',
-    reward: 'Up to 15,000 tokens',
-    icon: <FaRocket className="text-red-400" />
-  },
-];
-
-const history = [
-  {
-    id: 1,
-    provider: 'Timewall',
-    offer: 'Complete a 10-minute survey',
-    reward: 150,
-    date: '2024-07-20'
-  },
-  {
-    id: 2,
-    provider: 'Ayet-Studios',
-    offer: 'Reach level 5 in "Castle Clash"',
-    reward: 300,
-    date: '2024-07-19'
-  },
-  {
-    id: 3,
-    provider: 'Revlum',
-    offer: 'Sign up for a free trial',
-    reward: 500,
-    date: '2024-07-19'
-  },
-];
-
-const Breadcrumb = () => (
-    <div className="flex items-center text-sm text-gray-400 mb-6 bg-gray-800/50 p-2 rounded-md">
-      <FaHome className="mr-2" />
-      <span>Dashboard</span>
-      <FaChevronRight className="mx-2 text-xs" />
-      <span className="text-white">Offerwalls</span>
-    </div>
-);
-
-const OfferwallCard = ({ offer }) => (
-    <div className="bg-[#252736] rounded-xl p-6 flex flex-col hover:shadow-cyan-500/10 hover:shadow-lg transition-shadow duration-300">
-        <div className="flex items-center gap-4 mb-4">
-            <div className="bg-gray-800/60 p-3 rounded-full text-2xl">
-                {offer.icon}
-            </div>
-            <div>
-                <h3 className="font-bold text-xl text-white">{offer.name}</h3>
-                <p className="text-sm text-green-400 font-semibold">{offer.reward}</p>
-            </div>
-        </div>
-        <p className="text-gray-400 text-sm mb-5 flex-grow">{offer.description}</p>
-        <button className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2.5 px-6 rounded-lg text-sm transition-colors duration-200 w-full">
-            Visit {offer.name}
-        </button>
-    </div>
-);
-
-const HistoryTable = ({ history }) => (
-  <div className="bg-[#252736] rounded-xl p-6">
-    <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2"><FaHistory /> Recent Completions</h2>
-    <div className="overflow-x-auto">
-      <table className="min-w-full ">
-        <thead>
-          <tr className="border-b border-gray-700">
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Provider</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Offer</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Reward</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Date</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-800">
-          {history.map((record) => (
-            <tr key={record.id}>
-              <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-white">{record.provider}</td>
-              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">{record.offer}</td>
-              <td className="px-4 py-4 whitespace-nowrap text-sm text-green-400 font-bold">+{record.reward}</td>
-              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{record.date}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-);
+const DynamicHistoryTable = dynamic(() => import('../../../components/offerwalls/HistoryTable'), {
+  loading: () => <p className="text-center text-gray-400 py-8">Loading history...</p>,
+  ssr: false
+});
 
 export default function OfferwallsPage() {
+  const [offerwalls, setOfferwalls] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [offerwallsRes, historyRes] = await Promise.all([
+          fetch('/api/offerwalls'),
+          fetch('/api/history'),
+        ]);
+
+        if (!offerwallsRes.ok || !historyRes.ok) {
+          throw new Error('Failed to fetch data from the server.');
+        }
+
+        const offerwallsData = await offerwallsRes.json();
+        const historyData = await historyRes.json();
+
+        setOfferwalls(offerwallsData);
+        setHistory(historyData);
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+        setError('Could not load offerwall data. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const breadcrumbItems = [{ label: 'Offerwalls' }];
+
+  const renderOfferwallCards = () => {
+    if (loading) {
+      return Array.from({ length: 4 }).map((_, index) => (
+        <div key={index} className="bg-gray-800 rounded-xl p-6 animate-pulse">
+            <div className="w-full h-36 bg-gray-700 rounded-lg mb-4"></div>
+            <div className="w-3/4 h-6 bg-gray-700 rounded mb-2"></div>
+            <div className="w-full h-12 bg-gray-700 rounded mb-4"></div>
+            <div className="w-full h-12 bg-gray-700 rounded-lg"></div>
+        </div>
+      ));
+    }
+    return offerwalls.map((offer) => (
+        <OfferwallCard key={offer.id} offer={offer} />
+    ));
+  }
+
+  const renderContent = () => {
+    if (error) {
+      return (
+        <div className="text-center text-red-400 bg-red-500/10 p-8 rounded-lg flex flex-col items-center shadow-lg">
+          <FaExclamationTriangle className="text-5xl mb-4 text-red-500" />
+          <h2 className="text-2xl font-bold mb-2 text-white">An Error Occurred</h2>
+          <p className="text-red-300">{error}</p>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-3 tracking-tight">Discover Offerwalls</h1>
+            <p className="text-lg text-gray-400 max-w-3xl mx-auto">Choose a provider to start completing offers and earning Bits. New offers are added daily!</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-8 mb-16">
+            {renderOfferwallCards()}
+        </div>
+        <DynamicHistoryTable history={history} />
+      </>
+    );
+  }
+
   return (
-    <div className="w-full max-w-7xl mx-auto">
-        <Breadcrumb />
-        
-        <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Available Offerwalls</h1>
-            <p className="text-gray-400">Choose a provider to start earning tokens by completing offers.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-            {offerwalls.map((offer) => (
-                <OfferwallCard key={offer.id} offer={offer} />
-            ))}
-        </div>
-
-        <HistoryTable history={history} />
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Breadcrumb items={breadcrumbItems} />
+      {renderContent()}
     </div>
   );
 }

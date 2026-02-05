@@ -1,6 +1,6 @@
 'use client';
 
-import { FaHome, FaChevronRight, FaCoins, FaStar, FaClock, FaWindowMaximize, FaMobileAlt, FaNewspaper } from 'react-icons/fa';
+import { FaCoins, FaStar, FaClock, FaWindowMaximize, FaMobileAlt, FaNewspaper } from 'react-icons/fa';
 
 const ptcAds = [
   {
@@ -28,15 +28,6 @@ const ptcAds = [
     icons: ['desktop', 'mobile']
   }
 ];
-
-const Breadcrumb = () => (
-    <div className="flex items-center text-sm text-gray-400 mb-4 bg-gray-800/50 p-2 rounded-md">
-      <FaHome className="mr-2" />
-      <span>Dashboard</span>
-      <FaChevronRight className="mx-2 text-xs" />
-      <span className="text-white">Ptc</span>
-    </div>
-);
 
 const StatsBar = () => (
     <div className="bg-[#252736] rounded-lg p-3 mb-6">
@@ -90,7 +81,6 @@ const PTCAdCard = ({ ad }) => (
 export default function PTCPage() {
   return (
     <div className="w-full max-w-7xl mx-auto">
-        <Breadcrumb />
         <StatsBar />
         <div>
             {ptcAds.map((ad, index) => (

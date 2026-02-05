@@ -24,7 +24,7 @@ export default function RegisterPage() {
     setMessage('');
 
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch('/api/auth/register', {  // This is the new App Router endpoint
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

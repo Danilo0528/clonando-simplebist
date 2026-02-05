@@ -1,40 +1,114 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useStats } from '../../context/StatsContext'; // Corrected import path
+import Cookies from 'js-cookie'; // Import js-cookie
 import { FaGift } from 'react-icons/fa';
 
 const DailyReward = () => {
-    // Initial time in seconds from the image: 10h 35m 48s
-    const initialTime = (10 * 3600) + (35 * 60) + 48;
-    const [timeLeft, setTimeLeft] = useState(initialTime);
+    const { refreshUserData } = useStats(); // Use refreshUserData
+    const [canClaim, setCanClaim] = useState(false);
+    const [timeLeft, setTimeLeft] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const fetchRewardStatus = useCallback(async () => {
+        const token = Cookies.get('token'); // Get token from cookies
+        if (!token) {
+            setLoading(false);
+            return;
+        }
+        try {
+            setLoading(true);
+            const res = await fetch('/api/rewards', {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (!res.ok) throw new Error('Failed to fetch reward status');
+            const data = await res.json();
+            setCanClaim(data.canClaim);
+            setTimeLeft(data.timeLeft > 0 ? data.timeLeft / 1000 : 0); // Convert ms to seconds
+            setError(null);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        if (timeLeft <= 0) return;
+        fetchRewardStatus();
+    }, [fetchRewardStatus]);
+
+    useEffect(() => {
+        if (timeLeft <= 0 || canClaim) return;
 
         const timer = setInterval(() => {
-            setTimeLeft(prevTime => prevTime > 0 ? prevTime - 1 : 0);
+            setTimeLeft(prevTime => (prevTime > 1 ? prevTime - 1 : 0));
         }, 1000);
 
+        if (timeLeft === 0 && !canClaim) {
+            setCanClaim(true);
+        }
+
         return () => clearInterval(timer);
-    }, [timeLeft]);
+    }, [timeLeft, canClaim]);
+
+    const handleClaim = async () => {
+        const token = Cookies.get('token'); // Get token from cookies
+        if (!token || !canClaim) return;
+        try {
+            const res = await fetch('/api/rewards', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Failed to claim reward');
+            
+            await refreshUserData(); // Use refreshUserData
+            await fetchRewardStatus(); // Re-fetch reward status
+
+        } catch (err) {
+            setError(err.message);
+        }
+    };
 
     const formatTime = (seconds) => {
+        if (seconds <= 0) return '00:00:00';
         const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
         const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-        const s = (seconds % 60).toString().padStart(2, '0');
+        const s = Math.floor(seconds % 60).toString().padStart(2, '0');
         return `${h}:${m}:${s}`;
     };
 
+    const renderContent = () => {
+        if (loading) {
+            return <span className="text-xs text-gray-400">Checking...</span>;
+        }
+        if (error) {
+            return <span className="text-xs text-red-400">Error</span>;
+        }
+        if (canClaim) {
+            return (
+                <button onClick={handleClaim} className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-xs px-3 py-1 rounded-md transition-colors">
+                    CLAIM
+                </button>
+            );
+        }
+        return (
+             <span className="font-semibold text-white bg-gray-700/50 px-2 py-1 rounded-md text-xs tracking-wider">
+                {formatTime(timeLeft)}
+            </span>
+        );
+    }
+
     return (
         <div className="px-2 pb-2">
-            <div className="bg-surface-800/60 rounded-md p-2 flex items-center justify-between text-sm">
+            <div className="bg-gray-800/60 rounded-md p-2 flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                    <FaGift className="text-yellow-400" size={18}/>
+                    <FaGift className={`text-yellow-400 ${canClaim ? 'animate-pulse' : ''}`} size={18}/>
                     <span className="font-bold text-white text-xs">DAILY REWARD</span>
                 </div>
-                <span className="font-semibold text-white bg-surface-900/50 px-2 py-0.5 rounded-md text-xs">
-                    {formatTime(timeLeft)}
-                </span>
+                {renderContent()}
             </div>
         </div>
     );

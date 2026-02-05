@@ -1,12 +1,7 @@
 'use client';
 
 import { FaStar } from 'react-icons/fa';
-
-const offerwalls = [
-  { name: 'CPX Research', rating: 5, bonus: 15 },
-  { name: 'TimeWall', rating: 4, bonus: 15 },
-  { name: 'BitLabs', rating: 4, bonus: 10 },
-];
+import { useEffect, useState } from 'react';
 
 const OfferwallCard = ({ name, rating, bonus }) => (
   <div className="bg-gray-700/50 p-3 rounded-lg">
@@ -23,6 +18,22 @@ const OfferwallCard = ({ name, rating, bonus }) => (
 );
 
 export default function FeaturedOfferwalls() {
+  const [offerwalls, setOfferwalls] = useState([]);
+
+  useEffect(() => {
+    const fetchOfferwalls = async () => {
+      try {
+        const response = await fetch('/api/offerwalls');
+        const data = await response.json();
+        setOfferwalls(data);
+      } catch (error) {
+        console.error('Error fetching offerwalls:', error);
+      }
+    };
+
+    fetchOfferwalls();
+  }, []);
+
   return (
     <div className="bg-[#252736] p-4 rounded-lg">
       <h3 className="font-bold text-sm mb-3 flex items-center text-yellow-400">

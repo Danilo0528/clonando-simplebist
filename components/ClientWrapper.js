@@ -1,11 +1,11 @@
 'use client';
 
-import { StatsProvider } from '../context/StatsContext';
+import { AppProvider } from '../context/AppContext';
 import { Toaster } from 'react-hot-toast';
 
 export default function ClientWrapper({ children }) {
   return (
-    <StatsProvider>
+    <AppProvider>
       <Toaster
         position="top-center"
         reverseOrder={false}
@@ -19,6 +19,6 @@ export default function ClientWrapper({ children }) {
         }}
       />
       {children}
-    </StatsProvider>
+    </AppProvider>
   );
 }

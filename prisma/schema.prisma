@@ -16,9 +16,11 @@ model User {
   balance           Float    @default(0)
   tokenBalance      Float    @default(0)
   boundTokenBalance Float    @default(0)
-  energyPoints      Int      @default(0)
+  energyPoints      Int      @default(100) // Empezar en 100 puntos
   hashpowerVirtual  Float    @default(0)
   level             Int      @default(1)
   xp                Int      @default(0)
   createdAt         DateTime @default(now())
+  lastFaucetClaim   DateTime?
+  lastEnergyUpdate  DateTime?
 }

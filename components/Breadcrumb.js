@@ -1,28 +1,39 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { FaHome } from 'react-icons/fa';
 
-const Breadcrumb = ({ items }) => {
+const Breadcrumb = () => {
+    const pathname = usePathname();
+    const pathSegments = pathname.split('/').filter(i => i);
+
+    // Do not show breadcrumbs on the main dashboard page
+    if (pathSegments.length <= 1 && (pathSegments[0] === 'dashboard' || pathSegments[0] === '')) {
+        return null;
+    }
+
     return (
-        <nav className="flex items-center text-sm text-gray-400 mb-4" aria-label="Breadcrumb">
-            <ol className="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
-                <li className="inline-flex items-center">
-                    <Link href="/" className="inline-flex items-center text-xs font-medium text-gray-400 hover:text-white">
-                        <FaHome className="mr-2"/>
-                        Dashboard
-                    </Link>
+        <nav className="text-sm text-gray-400" aria-label="Breadcrumb">
+            <ol className="list-none p-0 inline-flex">
+                <li className="flex items-center">
+                    <Link href="/" className="hover:text-white">Dashboard</Link>
                 </li>
-                {items.map((item, index) => (
-                    <li key={index}>
-                        <div className="flex items-center">
-                            <span className="mx-2 text-gray-500">/</span>
-                            <span className={`text-xs font-medium ${index === items.length - 1 ? 'text-gray-200' : 'text-gray-400'}`}>
-                                {item.label}
-                            </span>
-                        </div>
-                    </li>
-                ))}
+                {pathSegments.map((segment, index) => {
+                    const href = '/' + pathSegments.slice(0, index + 1).join('/');
+                    const isLast = index === pathSegments.length - 1;
+                    const name = segment.charAt(0).toUpperCase() + segment.slice(1);
+
+                    return (
+                        <li key={href} className="flex items-center">
+                            <span className="mx-2">/</span>
+                            {isLast ? (
+                                <span className="text-white font-semibold">{name}</span>
+                            ) : (
+                                <Link href={href} className="hover:text-white">{name}</Link>
+                            )}
+                        </li>
+                    );
+                })}
             </ol>
         </nav>
     );

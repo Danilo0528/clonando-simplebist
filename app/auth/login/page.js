@@ -28,7 +28,7 @@ export default function LoginPage() {
     setMessage('');
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/login', {  // This now points to the App Router endpoint
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -39,8 +39,10 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Store token in localStorage
-        localStorage.setItem('token', data.token);
+        // Store token using the token manager
+        const { setToken } = await import('../../../lib/tokenManager');
+        setToken(data.token);
+        
         setMessage('Login successful! Redirecting...');
         setTimeout(() => {
           router.push('/dashboard');

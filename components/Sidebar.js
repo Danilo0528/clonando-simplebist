@@ -10,23 +10,32 @@ import StatsPanel from './sidebar/StatsPanel';
 import BeltPanel from './sidebar/BeltPanel';
 import DailyReward from './sidebar/DailyReward';
 import {
-  FaTachometerAlt, FaWallet, FaEye, FaFaucet, FaLink, FaBolt, 
-  FaMoneyBillWave, FaCubes, FaArchive, FaShoppingCart, FaGamepad, 
+  FaTachometerAlt, FaWallet, FaEye, FaFaucet, FaLink, FaTrophy, 
+  FaMoneyBillWave, FaMicrochip, FaHammer, FaBox, FaShoppingCart, FaGamepad, 
   FaPlusCircle, FaBars, FaTimes, FaRocket, FaCube, 
-  FaBullhorn, FaCrown, FaChevronDown
+  FaBullhorn, FaCrown, FaChevronDown, FaListAlt
 } from 'react-icons/fa';
 
+// Reordered and updated for better UX
 const navItems = [
+    // Core
     { href: '/dashboard', label: 'Dashboard', icon: <FaTachometerAlt /> },
-    { href: '/offerwalls', label: 'Offerwalls', icon: <FaWallet /> },
+    { href: '/wallet', label: 'Wallet', icon: <FaWallet /> },
+    
+    // Earning
+    { href: '/faucet', label: 'Faucet', icon: <FaFaucet /> },
+    { href: '/offerwalls', label: 'Offerwalls', icon: <FaListAlt /> },
     { href: '/ptc', label: 'PTC', icon: <FaEye /> },
-    { href: '/faucet', label: 'Faucet', icon: <FaFaucet />, status: 'READY' },
     { href: '/shortlinks', label: 'Shortlinks', icon: <FaLink /> },
-    { href: '/challenges', label: 'Challenges', icon: <FaBolt /> },
+    { href: '/mining', label: 'Mining', icon: <FaHammer /> },
+    { href: '/challenges', label: 'Challenges', icon: <FaTrophy /> },
+
+    // Management
+    { href: '/hardware', label: 'Hardware', icon: <FaMicrochip /> },
+    { href: '/inventory', label: 'Inventory', icon: <FaBox /> },
     { href: '/fund', label: 'Fund', icon: <FaMoneyBillWave /> },
-    { href: '/hardware', label: 'Hardware', icon: <FaCubes /> },
-    { href: '/mining', label: 'Mining', icon: <FaArchive /> },
-    { href: '/inventory', label: 'Inventory', icon: <FaArchive /> },
+
+    // Community & Extras
     { href: '/market', label: 'Market', icon: <FaShoppingCart />, dropdown: true },
     { href: '/games',label: 'Games', icon: <FaGamepad />, dropdown: true },
     { 
