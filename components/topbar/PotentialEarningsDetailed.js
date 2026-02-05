@@ -47,6 +47,14 @@ const PotentialEarningsDetailed = ({ user }) => {
     return 100; // Default energy
   }, [user]);
 
+    const formatTime = useCallback((seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }, []);
+
   const fetchPotentialEarnings = useCallback(async () => {
     try {
       setLoading(true);
@@ -142,16 +150,7 @@ const PotentialEarningsDetailed = ({ user }) => {
     } finally {
       setLoading(false);
     }
-  }, [getUserLevel, getUserEnergy]);
-
-  // Función para formatear tiempo
-  const formatTime = useCallback((seconds) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    
-    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }, []);
+  }, [getUserLevel, getUserEnergy, formatTime]);
 
   // Solo ejecutar cuando el usuario cambie
   useEffect(() => {

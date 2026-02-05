@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { 
     FaHistory, FaCheckCircle, FaHourglassHalf, FaTimesCircle, FaCalendarAlt, FaCoins 
 } from 'react-icons/fa';
@@ -30,7 +31,7 @@ const HistoryTable = ({ history }) => (
             return (
                 <tr key={record.id} className="hover:bg-gray-700/30 transition-colors">
                 <td className="px-4 py-4 whitespace-nowrap font-medium text-white flex items-center gap-3">
-                    <img src={record.provider_logo} alt={record.provider} className="w-8 h-8 rounded-full object-cover"/>
+                    <Image src={record.provider_logo} alt={record.provider} width={32} height={32} className="rounded-full object-cover"/>
                     {record.provider}
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-gray-300">{record.offer}</td>

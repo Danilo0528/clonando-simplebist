@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { FaHome, FaChevronRight, FaCoins, FaServer, FaShoppingCart, FaMoneyBillWave, FaHistory } from 'react-icons/fa';
 
 const Breadcrumb = () => (
@@ -86,7 +87,7 @@ const HardwareCard = ({ tier }) => {
     return (
         <div className="bg-[#252736] rounded-lg p-5 flex flex-col justify-between">
             <div>
-                <img src={tier.image} alt={`${tier.name} miner`} className="h-24 mx-auto mb-4"/>
+                <Image src={tier.image} alt={`${tier.name} miner`} width={96} height={96} className="mx-auto mb-4"/>
                 <h3 className="text-xl font-bold text-center text-white">{tier.name}</h3>
                 <p className="text-sm text-gray-400 text-center mb-2">HARDWARE</p>
                 <p className="text-4xl font-bold text-center text-green-400 mb-1">{tier.profitability}</p>

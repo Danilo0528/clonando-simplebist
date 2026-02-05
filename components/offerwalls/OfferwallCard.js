@@ -1,13 +1,14 @@
 'use client';
 
+import Image from 'next/image';
 import { FaStar, FaExternalLinkAlt } from 'react-icons/fa';
 
 const OfferwallCard = ({ offer }) => (
     <div 
         className="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-cyan-500/20 transition-all duration-300 transform hover:-translate-y-1 group"
     >
-        <div className="relative">
-            <img src={offer.image_url} alt={`${offer.name} Offerwall`} className="w-full h-36 object-cover" />
+        <div className="relative h-36 w-full">
+            <Image src={offer.image_url} alt={`${offer.name} Offerwall`} layout="fill" objectFit="cover" />
             <div className="absolute top-2 right-2 bg-gray-900/70 text-yellow-400 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1">
                 <FaStar />
                 <span>Popular</span>

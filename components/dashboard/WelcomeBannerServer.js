@@ -44,7 +44,7 @@ export default async function WelcomeBannerServer() {
 
         <div className="bg-gray-800/50 p-3 rounded-lg">
             <h3 className="font-bold text-sm mb-3 flex items-center text-cyan-400">
-                <FaChartLine className="mr-2" /> This Month's Earnings
+                <FaChartLine className="mr-2" /> This Month&apos;s Earnings
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <StatCard title="Offerwalls" value="1,203.50" change="+25.5%" color="cyan" />

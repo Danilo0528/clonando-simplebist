@@ -1,8 +1,6 @@
 'use client';
 
-import { useState } from 'react';
 import { FaUsers, FaClock, FaBolt, FaCalculator, FaCoins } from 'react-icons/fa';
-import SimpleMiner from '../SimpleMiner';
 
 const COINS = [
     { id: 'bitcoin', name: 'Bitcoin', block: '#19111', reward: '5,968.98', algorithm: 'SHA256', power: '36.55 GH', participants: '300', time: '03:03:02', iconColor: 'bg-orange-500' },
@@ -10,23 +8,13 @@ const COINS = [
     { id: 'litecoin', name: 'Litecoin', block: '#19113', reward: '5,955.54', algorithm: 'Scrypt', power: '20.32 GH', participants: '289', time: '03:03:02', iconColor: 'bg-gray-500' },
 ];
 
-export default function MiningCompact() {
-    const [selectedCoin, setSelectedCoin] = useState(null);
-
-    const handleSelectCoin = (coin) => {
-        setSelectedCoin(coin);
-    };
-
-    if (selectedCoin) {
-        return <SimpleMiner coin={selectedCoin} onBack={() => setSelectedCoin(null)} />;
-    }
-
+export default function MiningCompact({ onSelectCoin }) {
     return (
         <div>
             <h1 className="text-2xl font-bold mb-6 text-gray-200">Available Mining Blocks</h1>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {COINS.map((coin) => (
-                    <div key={coin.id} className="bg-[#252736] rounded-lg p-6 flex flex-col justify-between cursor-pointer" onClick={() => handleSelectCoin(coin)}>
+                    <div key={coin.id} className="bg-[#252736] rounded-lg p-6 flex flex-col justify-between cursor-pointer" onClick={() => onSelectCoin(coin)}>
                         <div>
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-3">
