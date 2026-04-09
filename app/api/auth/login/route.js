@@ -37,9 +37,10 @@ export async function POST(request) {
       { expiresIn: '24h' } // Token expires in 24 hours
     );
 
-    // Create response with user data
+    // Create response with user data AND token
     const response = NextResponse.json({
       success: true,
+      token: token,
       user: {
         id: user.id,
         username: user.username,
@@ -53,7 +54,7 @@ export async function POST(request) {
       }
     });
 
-    // Set httpOnly cookie for middleware authentication
+    // Set cookie for middleware authentication
     response.cookies.set('token', token, {
       httpOnly: false, // Allow client-side access for API requests
       secure: process.env.NODE_ENV === 'production',

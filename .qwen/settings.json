@@ -4,7 +4,14 @@
       "Bash(npm install)",
       "Bash(timeout *)",
       "Bash(true)",
-      "Bash(npx *)"
+      "Bash(npx *)",
+      "Bash(node *)",
+      "Bash(mv *)",
+      "Bash(sqlite3 *)",
+      "Bash(lsof *)",
+      "Bash(curl *)",
+      "Bash(kill *)",
+      "Bash(rm *)"
     ]
   },
   "$version": 3

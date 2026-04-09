@@ -77,6 +77,8 @@ export async function GET(request) {
           xp: true,
           createdAt: true,
           lastFaucetClaim: true,
+          isAdmin: true,
+          isActive: true,
         }
       });
     }
@@ -96,6 +98,8 @@ export async function GET(request) {
       progressPercentage: progression.progressPercentage, // Use the calculated progress percentage
       createdAt: updatedUser.createdAt,
       lastFaucetClaim: updatedUser.lastFaucetClaim, // Include the last faucet claim time
+      isAdmin: fullUser.isAdmin, // Include admin status
+      isActive: fullUser.isActive, // Include active status
       // Include energy-related information
       maxEnergy: maxEnergy,
       energyRegenerationRate: 8, // 8 points every 5 minutes
