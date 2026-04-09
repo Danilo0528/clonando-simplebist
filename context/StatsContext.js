@@ -51,9 +51,32 @@ export const StatsProvider = ({ children }) => {
 
             if (res.ok) {
                 const data = await res.json();
-                
+
+                // Transform flat API response into nested structure expected by components
+                const transformedData = {
+                    ...data,
+                    balances: {
+                        simplebits: data.balance || 0,
+                        sc: data.balance || 0,
+                        energy: data.energyPoints || 0,
+                        level: data.level || 1,
+                        maxEnergy: data.maxEnergy || 100,
+                        tokenBalance: data.tokenBalance || 0,
+                        boundTokenBalance: data.boundTokenBalance || 0,
+                    },
+                    levelInfo: {
+                        level: data.level || 1,
+                        xp: data.xp || 0,
+                        xpInCurrentLevel: data.xpInCurrentLevel || 0,
+                        xpNeededForNextLevel: data.xpNeededForNextLevel || 100,
+                        progressPercentage: data.progressPercentage || 0,
+                    },
+                    energyRegenerationRate: data.energyRegenerationRate || 8,
+                    lastEnergyUpdate: data.lastEnergyUpdate || new Date().toISOString(),
+                };
+
                 // Calcular energía actual considerando regeneración desde la última actualización
-                const updatedUserData = calculateCurrentEnergy(data);
+                const updatedUserData = calculateCurrentEnergy(transformedData);
                 setUserData(updatedUserData);
                 setHasLoaded(true);
             } else {

@@ -1,14 +1,7 @@
 import jwt from 'jsonwebtoken';
+import prisma from '../../lib/prisma';
 
-// This is a mock database. In a real application, you'd use a real database.
-const users = {
-  testuser: {
-    lastDailyReward: null,
-    balance: 1000,
-  },
-};
-
-const JWT_SECRET = 'your-super-secret-key-that-is-at-least-32-chars-long';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
 const REWARD_AMOUNT = 100; // The amount of currency to award
 const COOLDOWN = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
@@ -18,20 +11,33 @@ export default async function handler(req, res) {
     return res.status(401).json({ message: 'Authentication required' });
   }
 
-  let user;
+  let userId;
   try {
     const token = authorization.split(' ')[1];
     const decoded = jwt.verify(token, JWT_SECRET);
-    user = users[decoded.username];
+    userId = decoded.userId;
+    
+    // Verify user exists
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+    });
+    
     if (!user) {
-      throw new Error('User not found');
+      return res.status(401).json({ message: 'User not found' });
     }
   } catch (error) {
     return res.status(401).json({ message: 'Invalid token' });
   }
 
   const now = Date.now();
-  const lastClaimed = user.lastDailyReward;
+  
+  // Get user with lastDailyReward field
+  const user = await prisma.user.findUnique({
+    where: { id: parseInt(userId) },
+  });
+  
+  // Use lastFaucetClaim or createdAt as fallback for lastDailyReward
+  const lastClaimed = user.lastFaucetClaim ? new Date(user.lastFaucetClaim).getTime() : null;
   const canClaim = !lastClaimed || (now - lastClaimed > COOLDOWN);
 
   if (req.method === 'GET') {
@@ -43,11 +49,18 @@ export default async function handler(req, res) {
     }
   } else if (req.method === 'POST') {
     if (canClaim) {
-      user.lastDailyReward = now;
-      user.balance += REWARD_AMOUNT;
-      res.status(200).json({ 
+      // Update user with new balance and last claim time
+      const updatedUser = await prisma.user.update({
+        where: { id: parseInt(userId) },
+        data: {
+          balance: user.balance + REWARD_AMOUNT,
+          lastFaucetClaim: new Date(),
+        },
+      });
+      
+      res.status(200).json({
         message: `You've claimed your ${REWARD_AMOUNT} Bits reward!`,
-        newBalance: user.balance,
+        newBalance: updatedUser.balance,
         nextClaimTime: now + COOLDOWN,
       });
     } else {

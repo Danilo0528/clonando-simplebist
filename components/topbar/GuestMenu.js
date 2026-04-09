@@ -1,13 +1,48 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { FaSignInAlt, FaFaucet } from 'react-icons/fa';
 import LoginForm from './LoginForm';
-import FaucetModal from '../faucet/FaucetModal'; // Importar el modal del faucet
+import FaucetModal from '../faucet/FaucetModal';
 
-const GuestMenu = ({ onLogin }) => {
-  const [loginFormVisible, setLoginFormVisible] = useState(true); // Changed to true
+const GuestMenu = () => {
+  const router = useRouter();
+  const [loginFormVisible, setLoginFormVisible] = useState(true);
   const [showFaucetModal, setShowFaucetModal] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleLogin = async (credentials) => {
+    try {
+      setError('');
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        // Store token in localStorage for client-side API calls
+        localStorage.setItem('token', data.user.token || '');
+        // Reload to update authentication state
+        window.location.href = '/dashboard';
+        return true;
+      } else {
+        setError(data.message || 'Login failed');
+        return false;
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+      console.error('Login error:', err);
+      return false;
+    }
+  };
+
+  const handleGoToRegister = () => {
+    router.push('/auth/register');
+  };
 
   return (
     <>
@@ -27,7 +62,11 @@ const GuestMenu = ({ onLogin }) => {
         {/* Login dropdown */}
         <div className="absolute hidden group-hover:block top-full right-0 mt-1 w-64 bg-[#2a2c3a] rounded-md shadow-lg py-4 z-50 border border-gray-700">
           {loginFormVisible ? (
-            <LoginForm onLogin={onLogin} onCancel={() => setLoginFormVisible(false)} />
+            <LoginForm 
+              onLogin={handleLogin} 
+              onCancel={() => setLoginFormVisible(false)}
+              error={error}
+            />
           ) : (
             <div className="px-4 space-y-2">
               <button
@@ -37,7 +76,7 @@ const GuestMenu = ({ onLogin }) => {
                 <FaSignInAlt className="mr-2" /> Login
               </button>
               <button
-                onClick={() => setLoginFormVisible(true)} // This should probably go to a register page
+                onClick={handleGoToRegister}
                 className="w-full text-left px-4 py-2 text-sm hover:bg-blue-600/30 text-blue-400"
               >
                 Register
@@ -54,9 +93,9 @@ const GuestMenu = ({ onLogin }) => {
       </div>
 
       {/* Modal del Faucet */}
-      <FaucetModal 
-        isOpen={showFaucetModal} 
-        onClose={() => setShowFaucetModal(false)} 
+      <FaucetModal
+        isOpen={showFaucetModal}
+        onClose={() => setShowFaucetModal(false)}
       />
     </>
   );

@@ -1,55 +1,40 @@
-export default function handler(req, res) {
-    const transactions = [
-      {
-        id: 'txn_1',
-        type: 'Offerwall Reward',
-        description: 'Lootably - Gaming Survey',
-        amount: 1250,
-        status: 'Completed',
-        date: '2024-07-21T10:30:00Z',
-      },
-      {
-        id: 'txn_2',
-        type: 'Daily Reward',
-        description: 'Daily Check-in Bonus',
-        amount: 250,
-        status: 'Completed',
-        date: '2024-07-21T08:00:00Z',
-      },
-      {
-        id: 'txn_3',
-        type: 'Withdrawal',
-        description: 'Withdraw to BTC Wallet',
-        amount: -5000,
-        status: 'Completed',
-        date: '2024-07-20T18:45:00Z',
-      },
-      {
-        id: 'txn_4',
-        type: 'Offerwall Reward',
-        description: 'AdGate - Rise of Kingdoms',
-        amount: 3500,
-        status: 'Completed',
-        date: '2024-07-20T14:00:00Z',
-      },
-      {
-        id: 'txn_5',
-        type: 'Offerwall Reward',
-        description: 'Timewall - Video Ad',
-        amount: 50,
-        status: 'Pending',
-        date: '2024-07-20T11:15:00Z',
-      },
-      {
-        id: 'txn_6',
-        type: 'Referral Bonus',
-        description: 'New user signed up with your link',
-        amount: 500,
-        status: 'Completed',
-        date: '2024-07-19T20:00:00Z',
-      },
-    ];
+import jwt from 'jsonwebtoken';
+import prisma from '../../lib/prisma';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+
+export default async function handler(req, res) {
+  const { authorization } = req.headers;
   
-    res.status(200).json(transactions);
+  if (!authorization) {
+    return res.status(401).json({ message: 'Authentication required' });
   }
+
+  let userId;
+  try {
+    const token = authorization.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+    userId = decoded.userId;
+    
+    // Verify user exists
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+    });
+    
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+
+  // For now, return an empty array since we don't have a Transaction model
+  // In production, you would have a Transaction model and query it here
+  if (req.method === 'GET') {
+    res.status(200).json([]);
+  } else {
+    res.setHeader('Allow', ['GET']);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
+  }
+}
   

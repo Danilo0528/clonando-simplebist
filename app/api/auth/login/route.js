@@ -37,8 +37,32 @@ export async function POST(request) {
       { expiresIn: '24h' } // Token expires in 24 hours
     );
 
-    // Return the token
-    return NextResponse.json({ token });
+    // Create response with user data
+    const response = NextResponse.json({
+      success: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        balance: user.balance,
+        tokenBalance: user.tokenBalance,
+        boundTokenBalance: user.boundTokenBalance,
+        energyPoints: user.energyPoints,
+        level: user.level,
+        xp: user.xp,
+      }
+    });
+
+    // Set httpOnly cookie for middleware authentication
+    response.cookies.set('token', token, {
+      httpOnly: false, // Allow client-side access for API requests
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24, // 24 hours
+      path: '/',
+    });
+
+    return response;
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json({ message: 'An error occurred during login' }, { status: 500 });

@@ -2,20 +2,30 @@
 
 import { useState } from 'react';
 
-const LoginForm = ({ onLogin, onCancel }) => {
+const LoginForm = ({ onLogin, onCancel, error }) => {
   const [loginCredentials, setLoginCredentials] = useState({ username: '', password: '' });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const success = await onLogin(loginCredentials);
-    if (success) {
-      setLoginCredentials({ username: '', password: '' });
+    setIsLoading(true);
+    try {
+      const success = await onLogin(loginCredentials);
+      if (success) {
+        setLoginCredentials({ username: '', password: '' });
+      }
+    } finally {
+      setIsLoading(false);
     }
-    // You might want to show an error message on failure
   };
 
   return (
     <form onSubmit={handleLogin} className="px-4 space-y-3">
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-2 rounded text-xs">
+          {error}
+        </div>
+      )}
       <input
         type="text"
         placeholder="Username"
@@ -35,14 +45,16 @@ const LoginForm = ({ onLogin, onCancel }) => {
       <div className="flex space-x-2">
         <button
           type="submit"
-          className="flex-1 bg-green-600 hover:bg-green-700 text-white py-1.5 rounded text-sm"
+          disabled={isLoading}
+          className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-1.5 rounded text-sm"
         >
-          Login
+          {isLoading ? 'Logging in...' : 'Login'}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-1.5 rounded text-sm"
+          disabled={isLoading}
+          className="flex-1 bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-white py-1.5 rounded text-sm"
         >
           Cancel
         </button>
