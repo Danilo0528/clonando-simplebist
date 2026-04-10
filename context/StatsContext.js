@@ -11,10 +11,17 @@ export const StatsProvider = ({ children }) => {
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [hasLoaded, setHasLoaded] = useState(false); // Flag to prevent reloading
+    const [isClient, setIsClient] = useState(false); // Flag to prevent hydration mismatch
+
+    // Mark as client-side after mount to avoid hydration issues
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     // Load user data from API
     const loadUserData = useCallback(async () => {
         if (hasLoaded) return; // Prevent multiple loads
+        if (!isClient) return; // Wait until client-side
         
         try {
             setLoading(true);
@@ -43,7 +50,7 @@ export const StatsProvider = ({ children }) => {
             }
 
             const res = await fetch('/api/user', {
-                headers: { 
+                headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
@@ -78,6 +85,13 @@ export const StatsProvider = ({ children }) => {
                 // Calcular energía actual considerando regeneración desde la última actualización
                 const updatedUserData = calculateCurrentEnergy(transformedData);
                 setUserData(updatedUserData);
+                setHasLoaded(true);
+            } else if (res.status === 401) {
+                // Token inválido o expirado - limpiar y dejar que el interceptor redirija
+                console.log('Token expired in StatsContext, cleaning up...');
+                const { removeToken } = await import('../lib/tokenManager');
+                removeToken();
+                // No establecer datos default, el interceptor se encarga
                 setHasLoaded(true);
             } else {
                 // Set default user data if API call fails
@@ -124,7 +138,7 @@ export const StatsProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, [hasLoaded]); // Add hasLoaded as dependency
+    }, [hasLoaded, isClient]); // Dependencies
 
     // Función para calcular la energía actual considerando regeneración
     // IMPORTANTE: Esta función NO debe actualizar lastEnergyUpdate para evitar ciclos infinitos
@@ -187,82 +201,24 @@ export const StatsProvider = ({ children }) => {
         window.dispatchEvent(new CustomEvent('balanceUpdated'));
     }, []);
 
-    // Earn experience function
-    const earnExperience = useCallback((activity, amount) => {
-        const expEarned = amount || 10; // Default to 10 XP if no amount specified
-        
-        setUserData(prevData => {
-            if (!prevData) return prevData;
-            
-            const currentLevelInfo = prevData.levelInfo || {
-                level: 1,
-                xp: 0,
-                xpInCurrentLevel: 0,
-                xpNeededForNextLevel: 100,
-                progressPercentage: 0
-            };
-            
-            const newXp = currentLevelInfo.xp + expEarned;
-            const newXpInCurrentLevel = currentLevelInfo.xpInCurrentLevel + expEarned;
-            const newXpNeededForNextLevel = currentLevelInfo.xpNeededForNextLevel;
-            
-            let newLevel = currentLevelInfo.level;
-            let finalXpInCurrentLevel = newXpInCurrentLevel;
-            let finalXpNeededForNextLevel = newXpNeededForNextLevel;
-            
-            // Check if leveled up
-            if (finalXpInCurrentLevel >= newXpNeededForNextLevel) {
-                newLevel += 1;
-                finalXpInCurrentLevel = finalXpInCurrentLevel - newXpNeededForNextLevel;
-                // Calculate new XP needed for next level based on new level
-                finalXpNeededForNextLevel = Math.floor(100 * Math.pow(newLevel, 1.5)); // Using the formula from getExpForLevel
-            }
-            
-            // Calculate progress percentage
-            const progressPercentage = finalXpNeededForNextLevel > 0 ? (finalXpInCurrentLevel / finalXpNeededForNextLevel) * 100 : 0;
-            
-            const newLevelInfo = {
-                ...currentLevelInfo,
-                level: newLevel,
-                xp: newXp,
-                xpInCurrentLevel: finalXpInCurrentLevel,
-                xpNeededForNextLevel: finalXpNeededForNextLevel,
-                progressPercentage: progressPercentage
-            };
-            
-            // Update max energy if level changed
-            const updatedData = { ...prevData, levelInfo: newLevelInfo };
-            if (newLevel !== currentLevelInfo.level) {
-                updatedData.balances = {
-                    ...updatedData.balances,
-                    level: newLevel,
-                    maxEnergy: 100 + (newLevel * 10)
-                };
-            }
-            
-            return updatedData;
-        });
-        
-        return expEarned;
-    }, []);
-
     // Refresh user data function
     const refreshUserData = useCallback(async () => {
         setHasLoaded(false); // Reset the loaded flag to allow reload
         await loadUserData();
     }, [loadUserData]);
 
-    // Load user data on mount - only once
+    // Load user data on mount - only once, after client is ready
     useEffect(() => {
-        loadUserData();
-    }, [loadUserData]);
+        if (isClient) {
+            loadUserData();
+        }
+    }, [isClient, loadUserData]);
 
     // Provide context values
     const value = {
         userData,
         loading,
         updateBalance,
-        earnExperience,
         refreshUserData
     };
 

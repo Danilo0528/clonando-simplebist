@@ -42,11 +42,20 @@ export default function LoginPage() {
         // Store token using the token manager
         const { setToken } = await import('../../../lib/tokenManager');
         setToken(data.token);
-        
+
+        // Verify token was actually saved
+        const savedToken = localStorage.getItem('token');
+        if (!savedToken) {
+          setMessage('Error saving session. Please try again.');
+          setLoading(false);
+          return;
+        }
+
         setMessage('Login successful! Redirecting...');
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 1500);
+        
+        // Wait for token to be fully committed
+        await new Promise(resolve => setTimeout(resolve, 500));
+        router.push('/dashboard');
       } else {
         setMessage(data.message || 'Login failed');
       }
