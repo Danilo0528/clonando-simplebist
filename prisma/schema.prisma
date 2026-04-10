@@ -18,6 +18,7 @@ model User {
   boundTokenBalance Float    @default(0)
   energyPoints      Int      @default(100)
   hashpowerVirtual  Float    @default(0)
+  totalHashrate     Float    @default(0) // Hashrate total acumulado del hardware
   level             Int      @default(1)
   xp                Int      @default(0)
   isAdmin           Boolean  @default(false)
@@ -25,7 +26,45 @@ model User {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   lastFaucetClaim   DateTime?
+  lastMiningClaim   DateTime? // Última vez que reclamó recompensas de minería
   lastEnergyUpdate  DateTime?
+  failedLoginAttempts Int    @default(0)
+  lockoutExpiresAt  DateTime?
+  lastFaucetRequest DateTime? // Para rate limiting anti-bots
+  faucetAttempts    Int      @default(0) // Contador de intentos en ventana de tiempo
+  
+  // Relaciones
+  inventory         InventoryItem[]
+  withdrawals       Withdrawal[]
+}
+
+model InventoryItem {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  itemId      Int      // ID del item comprado
+  itemName    String   // Nombre del item
+  itemType    String   // hardware, consumable, booster
+  hashrate    Float    @default(0) // Hashrate que aporta este item
+  quantity    Int      @default(1)
+  purchasedAt DateTime @default(now())
+  expiresAt   DateTime? // Para items temporales
+  
+  user        User     @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+}
+
+model MarketItem {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  price       Float
+  type        String   // hardware, consumable, booster
+  hashrate    Float    @default(0) // Hashrate que aporta (si es hardware)
+  image       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Announcement {
@@ -58,4 +97,8 @@ model Withdrawal {
   status          String   @default("pending") // pending, processing, completed, rejected
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  
+  user            User     @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
 }

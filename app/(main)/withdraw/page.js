@@ -324,7 +324,7 @@ export default function WithdrawPage() {
         
         {message && (
           <div className={`mt-4 p-3 rounded-lg ${
-            message.includes('Success') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            message.includes('success') || message.includes('successfully') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
           }`}>
             {message}
           </div>

@@ -90,6 +90,7 @@ export async function GET(request) {
       email: updatedUser.email,
       balance: updatedUser.balance, // Use the main balance field
       tokenBalance: updatedUser.tokenBalance, // Include tokenBalance for consistency
+      boundTokenBalance: fullUser.boundTokenBalance, // Include bound token balance
       energyPoints: currentEnergy, // Current energy after regeneration
       level: progression.currentLevel, // Use the calculated level
       xp: updatedUser.xp,

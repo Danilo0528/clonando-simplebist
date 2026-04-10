@@ -1,63 +1,104 @@
 import { NextResponse } from 'next/server';
-import { getUserFromToken, updateUser } from '../../../lib/auth'; 
+import { getUserFromRequest } from '../../../lib/auth';
+import prisma from '../../../lib/prisma';
+import { 
+  getUserMiningStatus, 
+  claimMiningRewards,
+  consumeEnergyForMining,
+  calculateAccumulatedMiningReward
+} from '../../../lib/mining';
 
-const ENERGY_COST_PER_UNIT = 1;
-const XP_GAIN_PER_UNIT = 5;
-
-export async function POST(req) {
-  const token = req.headers.get('authorization')?.split(' ')[1];
-
-  if (!token) {
-    return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
-  }
-
+// ✅ GET: Obtener estado de minería con recompensa acumulada
+export async function GET(request) {
   try {
-    const user = await getUserFromToken(token);
-    if (!user) {
-      return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
-    }
+    const authHeader = request.headers.get('authorization');
+    const cookieHeader = request.headers.get('cookie');
 
-    const { amount } = await req.json();
-    if (!amount || amount <= 0) {
-      return NextResponse.json({ message: 'Invalid mining amount' }, { status: 400 });
-    }
-
-    let { level, xp, energyPoints } = user;
-
-    const totalEnergyCost = ENERGY_COST_PER_UNIT * amount;
-    if (energyPoints < totalEnergyCost) {
-      return NextResponse.json({ message: 'Not enough energy to mine.' }, { status: 400 });
-    }
-
-    const totalXpGain = XP_GAIN_PER_UNIT * amount;
-    energyPoints -= totalEnergyCost;
-    xp += totalXpGain;
-
-    const xpNeededForNextLevel = level * 1000;
-    if (xp >= xpNeededForNextLevel) {
-      level += 1; 
-      xp -= xpNeededForNextLevel; 
-      energyPoints = level * 100; 
-    }
-
-    const updatedUserData = { 
-        level, 
-        xp, 
-        energyPoints 
+    const mockReq = {
+      headers: {
+        authorization: authHeader,
+        cookie: cookieHeader,
+      },
     };
 
-    await updateUser(user.id, updatedUserData);
+    const user = await getUserFromRequest(mockReq);
 
-    return NextResponse.json({
-      message: 'Mining successful!',
-      xpGained: totalXpGain,
-      newEnergy: energyPoints,
-      newXP: xp,
-      newLevel: level,
-    }, { status: 200 });
+    if (!user) {
+      return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
+    }
 
+    // ✅ Usar lógica de timestamps para calcular recompensa acumulada
+    const status = await getUserMiningStatus(user.id);
+
+    return NextResponse.json(status);
   } catch (error) {
-    console.error('Mine API error:', error);
-    return NextResponse.json({ message: 'An internal server error occurred.' }, { status: 500 });
+    console.error('Error in mine GET:', error);
+    return NextResponse.json({ message: error.message }, { status: 500 });
+  }
+}
+
+// ✅ POST: Consumir energía y/o reclamar recompensas de minería
+export async function POST(request) {
+  try {
+    const authHeader = request.headers.get('authorization');
+    const cookieHeader = request.headers.get('cookie');
+
+    const mockReq = {
+      headers: {
+        authorization: authHeader,
+        cookie: cookieHeader,
+      },
+    };
+
+    const user = await getUserFromRequest(mockReq);
+
+    if (!user) {
+      return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { energyAmount, claimRewards } = body;
+
+    // ✅ Si el usuario quiere reclamar recompensas acumuladas
+    if (claimRewards) {
+      try {
+        const result = await claimMiningRewards(user.id);
+        return NextResponse.json(result);
+      } catch (error) {
+        if (error.message.includes('Not enough time') || error.message.includes('No mining rewards')) {
+          return NextResponse.json(
+            { message: error.message },
+            { status: 429 }
+          );
+        }
+        throw error;
+      }
+    }
+
+    // ✅ Si el usuario quiere consumir energía para minar
+    if (energyAmount && energyAmount > 0) {
+      try {
+        const result = await consumeEnergyForMining(user.id, energyAmount);
+        return NextResponse.json(result);
+      } catch (error) {
+        if (error.message.includes('Insufficient energy')) {
+          return NextResponse.json(
+            { message: error.message },
+            { status: 400 }
+          );
+        }
+        throw error;
+      }
+    }
+
+    return NextResponse.json(
+      { message: 'Invalid request. Provide energyAmount or claimRewards' },
+      { status: 400 }
+    );
+  } catch (error) {
+    console.error('Error in mine POST:', error);
+    return NextResponse.json({ message: error.message }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 }

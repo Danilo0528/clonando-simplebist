@@ -1,12 +1,35 @@
 'use client';
 
 import { FaCoins, FaBolt, FaChevronDown } from 'react-icons/fa';
+import { useStats } from '../../context/StatsContext';
+import { useEffect, useState } from 'react';
 
 const TokenBalances = ({ balances }) => {
-  if (!balances) return null;
+  const { userData } = useStats();
+  const [displayBalance, setDisplayBalance] = useState(0);
+  const [targetBalance, setTargetBalance] = useState(0);
 
-  const simplebits = balances.simplebits || 0;
-  const energy = balances.energy || 0;
+  // ✅ "Falsa progresión" - animación suave en el cliente
+  useEffect(() => {
+    const currentBalance = balances?.simplebits || userData?.balances?.simplebits || 0;
+    setTargetBalance(currentBalance);
+    
+    // Animación de interpolación
+    const animate = () => {
+      setDisplayBalance(prev => {
+        const diff = currentBalance - prev;
+        if (Math.abs(diff) < 0.01) return currentBalance;
+        return prev + (diff * 0.1); // 10% por frame
+      });
+      requestAnimationFrame(animate);
+    };
+    
+    const animFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animFrame);
+  }, [balances?.simplebits, userData?.balances?.simplebits]);
+
+  const simplebits = displayBalance || 0;
+  const energy = balances?.energy || userData?.balances?.energy || 0;
 
   return (
     <div className="relative group">

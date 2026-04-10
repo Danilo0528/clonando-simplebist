@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getUserFromRequest } from '../../../lib/auth';
 import prisma from '../../../lib/prisma';
-import { canClaimFaucet, getFaucetConfig, claimFaucet } from '../../../lib/faucet';
+import { 
+  canClaimFaucet, 
+  getFaucetConfig, 
+  claimFaucet,
+  calculateAccumulatedFaucetReward,
+  checkFaucetRateLimit,
+  recordFaucetAttempt
+} from '../../../lib/faucet';
 
 export async function GET(request) {
   try {
@@ -23,7 +30,8 @@ export async function GET(request) {
       return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
     }
 
-    // Obtener información sobre la disponibilidad del faucet
+    // ✅ Usar la nueva lógica de timestamps para calcular recompensa acumulada
+    const accumulatedReward = await calculateAccumulatedFaucetReward(user.id);
     const faucetStatus = await canClaimFaucet(user.id);
     const faucetConfig = await getFaucetConfig();
 
@@ -37,7 +45,10 @@ export async function GET(request) {
       isReady: faucetStatus.canClaim,
       timeLeft: timeLeft,
       reward: faucetConfig.rewardAmount,
-      description: faucetConfig.description
+      description: faucetConfig.description,
+      // ✅ Nueva información de recompensa acumulada
+      accumulatedReward: accumulatedReward.accumulatedReward,
+      intervalsPassed: accumulatedReward.intervalsPassed || 0,
     });
   } catch (error) {
     console.error('Error in faucet GET:', error);
@@ -65,39 +76,43 @@ export async function POST(request) {
       return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
     }
 
-    // Intentar reclamar el faucet
-    const claimResult = await claimFaucet(user.id);
-
-    if (!claimResult.success) {
-      return NextResponse.json({ message: claimResult.message }, { status: 429 });
+    // ✅ ANTI-BOTS: Verificar rate limit antes de procesar
+    const rateLimitCheck = await checkFaucetRateLimit(user.id);
+    
+    if (!rateLimitCheck.allowed) {
+      return NextResponse.json(
+        { 
+          message: rateLimitCheck.error || 'Too Many Requests',
+          timeRemaining: Math.ceil(rateLimitCheck.timeRemaining / 1000),
+          attempts: rateLimitCheck.attempts
+        },
+        { status: 429 } // ✅ Error 429 Too Many Requests
+      );
     }
 
-    // Actualizar ambos balances del usuario en la base de datos
-    const updatedUser = await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        balance: { increment: claimResult.rewardAmount || claimResult.reward },
-        tokenBalance: { increment: claimResult.rewardAmount || claimResult.reward }
-      },
-      select: {
-        id: true,
-        username: true,
-        balance: true,
-        tokenBalance: true,
-        energyPoints: true,
-        level: true,
-        xp: true
-      }
-    });
+    // ✅ Registrar el intento para rate limiting
+    await recordFaucetAttempt(user.id);
+
+    // Intentar reclamar el faucet
+    const claimResult = await claimFaucet(user.id);
 
     return NextResponse.json({
       message: `You successfully claimed ${claimResult.rewardAmount} Bits!`,
       claimedAmount: claimResult.rewardAmount,
-      newUserBalance: updatedUser.balance,
-      newTokenBalance: updatedUser.tokenBalance
+      newUserBalance: claimResult.newBalance,
+      newTokenBalance: claimResult.newBalance
     });
   } catch (error) {
     console.error('Error in faucet POST:', error);
+    
+    // Si el error es por cooldown, devolver 429
+    if (error.message.includes('Cannot claim faucet yet')) {
+      return NextResponse.json(
+        { message: 'Faucet is still on cooldown' },
+        { status: 429 }
+      );
+    }
+    
     return NextResponse.json({ message: error.message }, { status: 500 });
   } finally {
     await prisma.$disconnect();

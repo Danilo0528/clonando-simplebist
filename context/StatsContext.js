@@ -1,7 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getToken } from '../lib/tokenManager'; // Usar nuestro tokenManager
+import { getToken } from '../lib/tokenManager';
+import { useMultipleCounters } from '../hooks/useAnimatedCounter';
 
 // Create the context
 const StatsContext = createContext();
@@ -10,42 +11,47 @@ const StatsContext = createContext();
 export const StatsProvider = ({ children }) => {
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [hasLoaded, setHasLoaded] = useState(false); // Flag to prevent reloading
-    const [isClient, setIsClient] = useState(false); // Flag to prevent hydration mismatch
+    const [hasLoaded, setHasLoaded] = useState(false);
+    const [isClient, setIsClient] = useState(false);
 
     // Mark as client-side after mount to avoid hydration issues
     useEffect(() => {
         setIsClient(true);
     }, []);
 
-    // Load user data from API
+    // ✅ FUNCIÓN: Cargar datos del usuario (se llama cada 30s para sincronización)
     const loadUserData = useCallback(async () => {
-        if (hasLoaded) return; // Prevent multiple loads
-        if (!isClient) return; // Wait until client-side
-        
+        if (!isClient) return;
+
         try {
-            setLoading(true);
             const token = getToken();
             if (!token) {
-                // Set default user data if no token
                 setUserData({
                     balances: {
+                        simplebits: 0,
                         sc: 0,
                         energy: 100,
-                        level: 1
+                        level: 1,
+                        maxEnergy: 100,
+                        tokenBalance: 0,
+                        boundTokenBalance: 0,
                     },
                     levelInfo: {
                         level: 1,
                         xp: 0,
                         xpInCurrentLevel: 0,
                         xpNeededForNextLevel: 100,
-                        progressPercentage: 0
+                        progressPercentage: 0,
                     },
-                    // Añadir información de regeneración de energía
-                    energyRegenerationRate: 8, // 8 puntos cada 5 minutos
-                    lastEnergyUpdate: new Date().toISOString()
+                    energyRegenerationRate: 8,
+                    lastEnergyUpdate: new Date().toISOString(),
+                    miningStatus: {
+                        accumulatedReward: 0,
+                        canClaimMining: false,
+                    },
                 });
                 setHasLoaded(true);
+                setLoading(false);
                 return;
             }
 
@@ -59,7 +65,6 @@ export const StatsProvider = ({ children }) => {
             if (res.ok) {
                 const data = await res.json();
 
-                // Transform flat API response into nested structure expected by components
                 const transformedData = {
                     ...data,
                     balances: {
@@ -80,92 +85,144 @@ export const StatsProvider = ({ children }) => {
                     },
                     energyRegenerationRate: data.energyRegenerationRate || 8,
                     lastEnergyUpdate: data.lastEnergyUpdate || new Date().toISOString(),
+                    miningStatus: {
+                        accumulatedReward: data.accumulatedReward || 0,
+                        canClaimMining: data.canClaimMining || false,
+                    },
                 };
 
-                // Calcular energía actual considerando regeneración desde la última actualización
                 const updatedUserData = calculateCurrentEnergy(transformedData);
                 setUserData(updatedUserData);
                 setHasLoaded(true);
             } else if (res.status === 401) {
-                // Token inválido o expirado - limpiar y dejar que el interceptor redirija
                 console.log('Token expired in StatsContext, cleaning up...');
                 const { removeToken } = await import('../lib/tokenManager');
                 removeToken();
-                // No establecer datos default, el interceptor se encarga
                 setHasLoaded(true);
             } else {
-                // Set default user data if API call fails
                 setUserData({
                     balances: {
+                        simplebits: 0,
                         sc: 0,
                         energy: 100,
                         level: 1,
-                        maxEnergy: 100
+                        maxEnergy: 100,
+                        tokenBalance: 0,
+                        boundTokenBalance: 0,
                     },
                     levelInfo: {
                         level: 1,
                         xp: 0,
                         xpInCurrentLevel: 0,
                         xpNeededForNextLevel: 100,
-                        progressPercentage: 0
+                        progressPercentage: 0,
                     },
                     energyRegenerationRate: 8,
-                    lastEnergyUpdate: new Date().toISOString()
+                    lastEnergyUpdate: new Date().toISOString(),
+                    miningStatus: {
+                        accumulatedReward: 0,
+                        canClaimMining: false,
+                    },
                 });
                 setHasLoaded(true);
             }
         } catch (error) {
             console.error('Error loading user data:', error);
-            // Set default user data on error
             setUserData({
                 balances: {
+                    simplebits: 0,
                     sc: 0,
                     energy: 100,
                     level: 1,
-                    maxEnergy: 100
+                    maxEnergy: 100,
+                    tokenBalance: 0,
+                    boundTokenBalance: 0,
                 },
                 levelInfo: {
                     level: 1,
                     xp: 0,
                     xpInCurrentLevel: 0,
                     xpNeededForNextLevel: 100,
-                    progressPercentage: 0
+                    progressPercentage: 0,
                 },
                 energyRegenerationRate: 8,
-                lastEnergyUpdate: new Date().toISOString()
+                lastEnergyUpdate: new Date().toISOString(),
+                miningStatus: {
+                    accumulatedReward: 0,
+                    canClaimMining: false,
+                },
             });
             setHasLoaded(true);
         } finally {
             setLoading(false);
         }
-    }, [hasLoaded, isClient]); // Dependencies
+    }, [isClient]);
+
+    // ✅ NUEVO: Sincronización ligera cada 30 segundos (solo balances, sin recarga completa)
+    const syncBalances = useCallback(async () => {
+        try {
+            const token = getToken();
+            if (!token) return;
+
+            const res = await fetch('/api/user/balances', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                
+                setUserData(prev => {
+                    if (!prev) return prev;
+
+                    return {
+                        ...prev,
+                        balances: {
+                            ...prev.balances,
+                            simplebits: data.balance || prev.balances.simplebits,
+                            sc: data.balance || prev.balances.sc,
+                            energy: data.energyPoints || prev.balances.energy,
+                            tokenBalance: data.tokenBalance || prev.balances.tokenBalance,
+                            boundTokenBalance: data.boundTokenBalance || prev.balances.boundTokenBalance,
+                        },
+                        miningStatus: {
+                            accumulatedReward: data.accumulatedReward || prev.miningStatus?.accumulatedReward || 0,
+                            canClaimMining: data.canClaimMining || false,
+                        },
+                    };
+                });
+            }
+        } catch (error) {
+            console.error('Error syncing balances:', error);
+        }
+    }, []);
+
+    // Configurar sincronización automática cada 30 segundos
+    useEffect(() => {
+        if (!isClient || !hasLoaded) return;
+
+        const syncInterval = setInterval(syncBalances, 30000); // ✅ Cada 30 segundos
+        
+        return () => clearInterval(syncInterval);
+    }, [isClient, hasLoaded, syncBalances]);
 
     // Función para calcular la energía actual considerando regeneración
-    // IMPORTANTE: Esta función NO debe actualizar lastEnergyUpdate para evitar ciclos infinitos
     const calculateCurrentEnergy = (userData) => {
         const lastUpdate = new Date(userData.lastEnergyUpdate);
         const now = new Date();
-        const timeDiff = now - lastUpdate; // en milisegundos
-        
-        // Convertir a minutos para calcular regeneración
+        const timeDiff = now - lastUpdate;
+
         const minutesPassed = timeDiff / (1000 * 60);
-        
-        // Calcular cuántos ciclos de 5 minutos han pasado
         const fiveMinuteCycles = Math.floor(minutesPassed / 5);
-        
-        // Calcular energía regenerada
         const energyRegenerated = fiveMinuteCycles * (userData.energyRegenerationRate || 8);
-        
-        // Calcular energía máxima basada en nivel
         const maxEnergy = 100 + ((userData.levelInfo?.level || 1) * 10);
-        
-        // Actualizar energía (sin sobrepasar el límite)
         const currentEnergy = Math.min(
-            (userData.balances?.energy || 0) + energyRegenerated, 
+            (userData.balances?.energy || 0) + energyRegenerated,
             maxEnergy
         );
-        
-        // Retorna los datos sin actualizar lastEnergyUpdate para evitar ciclos
+
         return {
             ...userData,
             balances: {
@@ -179,47 +236,44 @@ export const StatsProvider = ({ children }) => {
     const updateBalance = useCallback((resource, amount) => {
         setUserData(prevData => {
             if (!prevData) return prevData;
-            
+
             const newBalances = { ...prevData.balances };
             newBalances[resource] = (newBalances[resource] || 0) + amount;
-            
-            // Ensure energy doesn't go below 0
+
             if (resource === 'energy' && newBalances.energy < 0) {
                 newBalances.energy = 0;
             }
-            
-            // Actualizar la última fecha de actualización de energía solo si es energía
+
             const updatedData = { ...prevData, balances: newBalances };
             if (resource === 'energy') {
                 updatedData.lastEnergyUpdate = new Date().toISOString();
             }
-            
+
             return updatedData;
         });
-        
-        // Dispatch event to notify other components
+
         window.dispatchEvent(new CustomEvent('balanceUpdated'));
     }, []);
 
-    // Refresh user data function
+    // Refresh user data function (recarga completa)
     const refreshUserData = useCallback(async () => {
-        setHasLoaded(false); // Reset the loaded flag to allow reload
+        setHasLoaded(false);
         await loadUserData();
     }, [loadUserData]);
 
-    // Load user data on mount - only once, after client is ready
+    // Load user data on mount
     useEffect(() => {
         if (isClient) {
             loadUserData();
         }
     }, [isClient, loadUserData]);
 
-    // Provide context values
     const value = {
         userData,
         loading,
         updateBalance,
-        refreshUserData
+        refreshUserData,
+        syncBalances, // ✅ Exponer sincronización manual
     };
 
     return (
