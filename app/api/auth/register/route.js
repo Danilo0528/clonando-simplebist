@@ -1,41 +1,37 @@
 import { NextResponse } from 'next/server';
-import prisma from '../../../../lib/prisma';
+import prisma from '../../../../lib/prisma.mjs'; // Updated import
 import bcrypt from 'bcryptjs';
 
 export async function POST(request) {
   try {
-    const { username, email, password } = await request.json();
+    const { email, password, username } = await request.json();
 
     // Check if user already exists
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [
-          { username: username },
-          { email: email },
+          { email },
+          { username },
         ],
       },
     });
 
     if (existingUser) {
-      return NextResponse.json({ message: 'User already exists' }, { status: 409 });
+      return NextResponse.json({ message: 'Email or username already in use' }, { status: 409 });
     }
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create the user
     const user = await prisma.user.create({
       data: {
-        username,
         email,
+        username,
         password: hashedPassword,
       },
     });
 
-    // Don't return sensitive information like password
-    const { password: _, ...userWithoutPassword } = user;
+    return NextResponse.json({ message: 'User created successfully' }, { status: 201 });
 
-    return NextResponse.json(userWithoutPassword);
   } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json({ message: 'An error occurred during registration' }, { status: 500 });
