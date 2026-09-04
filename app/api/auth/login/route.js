@@ -32,7 +32,7 @@ export async function POST(request) {
 
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '24h' });
 
-    return NextResponse.json({ 
+    const response = NextResponse.json({ 
       user: { 
         id: user.id,
         username: user.username,
@@ -41,6 +41,16 @@ export async function POST(request) {
       },
       token 
     });
+
+    // Set token in cookie as well for middleware access
+    response.cookies.set('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 86400 // 24h
+    });
+
+    return response;
 
   } catch (error) {
     console.error('Login error:', error);

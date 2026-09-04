@@ -42,7 +42,7 @@ const TopBar = () => {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-40 bg-[#1e202b] border-b border-gray-800">
-        <div className="h-16 flex items-center justify-between px-6">
+        <div className="h-[var(--navbar-height)] flex items-center justify-between px-6">
              
              {/* Left Side: Logo + Balances */}
              <div className="flex items-center gap-6">

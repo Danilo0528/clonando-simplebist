@@ -19,87 +19,30 @@ const typeColors = {
 };
 
 export default function OtherPage() {
-    const [activeSection, setActiveSection] = useState('all');
     const [announcements, setAnnouncements] = useState([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
     const otherFeatures = [
-        {
-            id: 'referral',
-            title: 'Referral Program',
-            description: 'Invite friends and earn 20% of their earnings',
-            icon: FaGift,
-            color: 'green',
-            status: 'Available',
-            action: 'Invite Friends',
-        },
-        {
-            id: 'affiliate',
-            title: 'Affiliate Network',
-            description: 'Partner with us and earn commission',
-            icon: FaBullhorn,
-            color: 'blue',
-            status: 'Available',
-            action: 'Learn More',
-        },
-        {
-            id: 'vip',
-            title: 'VIP Program',
-            description: 'Exclusive benefits for top earners',
-            icon: FaCrown,
-            color: 'yellow',
-            status: 'Coming Soon',
-            action: 'Join Waitlist',
-        },
-        {
-            id: 'daily-bonus',
-            title: 'Daily Bonus',
-            description: 'Login daily to claim bonus rewards',
-            icon: FaStar,
-            color: 'purple',
-            status: 'Available',
-            action: 'Claim Bonus',
-        },
-        {
-            id: 'social',
-            title: 'Social Media Rewards',
-            description: 'Follow us on social media for extra rewards',
-            icon: FaLink,
-            color: 'pink',
-            status: 'Available',
-            action: 'Connect',
-        },
+        { id: 'referral', title: 'Referral Program', description: 'Invite friends and earn 20% of their earnings', icon: FaGift, color: 'green', status: 'Available', action: 'Invite Friends' },
+        { id: 'affiliate', title: 'Affiliate Network', description: 'Partner with us and earn commission', icon: FaBullhorn, color: 'blue', status: 'Available', action: 'Learn More' },
+        { id: 'vip', title: 'VIP Program', description: 'Exclusive benefits for top earners', icon: FaCrown, color: 'yellow', status: 'Coming Soon', action: 'Join Waitlist' },
+        { id: 'daily-bonus', title: 'Daily Bonus', description: 'Login daily to claim bonus rewards', icon: FaStar, color: 'purple', status: 'Available', action: 'Claim Bonus' },
+        { id: 'social', title: 'Social Media Rewards', description: 'Follow us on social media for extra rewards', icon: FaLink, color: 'pink', status: 'Available', action: 'Connect' },
     ];
 
     const fetchAnnouncements = useCallback(async () => {
         try {
             const token = localStorage.getItem('token');
-            if (!token) {
-                router.push('/auth/login');
-                return;
-            }
-
-            const response = await fetch('/api/announcements', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch announcements');
-            }
-
+            if (!token) { router.push('/auth/login'); return; }
+            const response = await fetch('/api/announcements', { headers: { 'Authorization': `Bearer ${token}` } });
+            if (!response.ok) throw new Error('Failed to fetch announcements');
             const data = await response.json();
             setAnnouncements(data.announcements || []);
-        } catch (error) {
-            console.error('Error fetching announcements:', error);
-        } finally {
-            setLoading(false);
-        }
+        } catch (error) { console.error('Error fetching announcements:', error); } finally { setLoading(false); }
     }, [router]);
 
-    useEffect(() => {
-        fetchAnnouncements();
-    }, [fetchAnnouncements]);
+    useEffect(() => { fetchAnnouncements(); }, [fetchAnnouncements]);
 
     const getColorClasses = (color) => {
         const colors = {
@@ -117,7 +60,6 @@ export default function OtherPage() {
         const now = new Date();
         const diffTime = Math.abs(now - date);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
         if (diffDays === 1) return 'Today';
         if (diffDays === 2) return 'Yesterday';
         if (diffDays < 7) return `${diffDays} days ago`;
@@ -134,19 +76,25 @@ export default function OtherPage() {
                 <p className="text-gray-400 mt-1">Explore additional ways to earn and engage</p>
             </div>
 
+            {/* Earnings Overview Card */}
+            <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-5 shadow-lg mb-8">
+                <h3 className="text-lg font-bold text-white mb-4">Earnings Overview</h3>
+                <div className="h-60 flex items-center justify-center">
+                    <div className="w-full h-full border-2 border-dashed border-gray-600 rounded-lg flex items-center justify-center">
+                        <p className="text-gray-500">Chart coming soon</p>
+                    </div>
+                </div>
+            </div>
+
             <div className="grid gap-4">
                 {otherFeatures.map((feature) => {
                     const Icon = feature.icon;
                     return (
-                        <div
-                            key={feature.id}
-                            className="bg-[#2a2c3a] border border-gray-700 rounded-lg p-6 hover:border-gray-600 transition-all"
-                        >
+                        <div key={feature.id} className="bg-[#2a2c3a] border border-gray-700 rounded-lg p-6 hover:border-gray-600 transition-all">
                             <div className="flex items-start gap-4">
                                 <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${getColorClasses(feature.color)}`}>
                                     <Icon className="text-3xl" />
                                 </div>
-
                                 <div className="flex-1">
                                     <div className="flex items-start justify-between mb-2">
                                         <div>
@@ -157,7 +105,6 @@ export default function OtherPage() {
                                             {feature.status}
                                         </span>
                                     </div>
-
                                     <button className={`mt-3 px-6 py-2 rounded-lg text-sm font-medium transition-colors ${getColorClasses(feature.color)}`}>
                                         {feature.action}
                                     </button>
@@ -168,17 +115,13 @@ export default function OtherPage() {
                 })}
             </div>
 
-            {/* Announcements - Fetched from API */}
             <div className="mt-8 bg-[#2a2c3a] border border-gray-700 rounded-lg p-6">
                 <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                     <FaBullhorn className="text-yellow-400" />
                     Latest Announcements
                 </h2>
-                
                 {loading ? (
-                    <div className="text-center py-8 text-gray-400">
-                        Loading announcements...
-                    </div>
+                    <div className="text-center py-8 text-gray-400">Loading announcements...</div>
                 ) : announcements.length === 0 ? (
                     <div className="text-center py-8 text-gray-400">
                         <FaMegaphone className="text-4xl mx-auto mb-2 opacity-50" />
@@ -189,22 +132,14 @@ export default function OtherPage() {
                         {announcements.map((announcement) => {
                             const TypeIcon = typeIcons[announcement.type] || FaInfoCircle;
                             const colorClass = typeColors[announcement.type] || typeColors.info;
-                            
                             return (
-                                <div 
-                                    key={announcement.id} 
-                                    className={`p-4 rounded-lg border-l-4 ${colorClass}`}
-                                >
+                                <div key={announcement.id} className={`p-4 rounded-lg border-l-4 ${colorClass}`}>
                                     <div className="flex items-start gap-3">
                                         <TypeIcon className="mt-1 flex-shrink-0" />
                                         <div className="flex-1">
                                             <div className="flex items-start justify-between gap-2">
                                                 <h3 className="text-white font-medium">{announcement.title}</h3>
-                                                {announcement.priority > 5 && (
-                                                    <span className="px-2 py-0.5 bg-red-500/20 text-red-400 rounded text-xs font-medium">
-                                                        Priority
-                                                    </span>
-                                                )}
+                                                {announcement.priority > 5 && <span className="px-2 py-0.5 bg-red-500/20 text-red-400 rounded text-xs font-medium">Priority</span>}
                                             </div>
                                             <p className="text-sm text-gray-400 mt-1">{announcement.content}</p>
                                             <p className="text-xs text-gray-500 mt-2">{formatDate(announcement.createdAt)}</p>

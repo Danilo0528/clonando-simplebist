@@ -69,22 +69,31 @@ const Sidebar = () => {
         {sidebarOpen ? <FaTimes /> : <FaBars />}
       </button>
 
-      <aside className={`fixed top-12 left-0 h-[calc(100vh-3rem)] bg-[#252736] text-gray-300 z-30 transform transition-transform duration-300 ease-in-out w-64 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 flex flex-col border-r border-surface-700`}>
+      <aside className={`h-full bg-[#252736] text-gray-300 transform transition-transform duration-300 ease-in-out w-[var(--sidebar-width)] flex flex-col border-r border-surface-700
+        md:translate-x-0 md:static md:z-auto
+        fixed top-[var(--navbar-height)] left-0 z-50 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+        `}>
         
-        <UserStatus />
+        {/* Header - Fixed Height */}
+        <div className="flex-shrink-0 pt-2">
+          <UserStatus />
+        </div>
 
-        <div className="p-2 border-b border-surface-700">
+        {/* Tab Buttons - Fixed Height */}
+        <div className="p-2 border-b border-surface-700 flex-shrink-0">
           <TabButtons activeTab={activeTab} onTabClick={handleTabClick} />
         </div>
 
+        {/* Active Panel - Grows conditionally */}
         {activeTab && (
-            <div className="p-3 border-b border-surface-700 animate-fade-in-down">
+            <div className="p-3 border-b border-surface-700 animate-fade-in-down flex-shrink-0">
                 {activeTab === 'equipment' && <EquipmentPanel />}
                 {activeTab === 'stats' && <StatsPanel />}
                 {activeTab === 'belt' && <BeltPanel />}
             </div>
         )}
 
+        {/* Navigation - Grows to fill space */}
         <nav className="flex-grow p-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
           <ul className="space-y-1">
             {navItems.map((item) => (
@@ -108,17 +117,20 @@ const Sidebar = () => {
           </ul>
         </nav>
 
-        <DailyReward />
+        {/* Footer Area - Pushed to bottom */}
+        <div className="mt-auto flex-shrink-0">
+          <DailyReward />
 
-        <div className="p-2 border-t border-surface-700 flex gap-1">
-            <button className='flex-1 flex items-center justify-center gap-2 bg-[#191b24] hover:border-gray-500 py-2.5 px-2 rounded-md text-sm border border-dashed border-surface-600 text-gray-300'>
-                <FaRocket />
-                BOOSTS
-            </button>
-            <button className='flex-1 flex items-center justify-center gap-2 bg-[#191b24] hover:border-gray-500 py-2.5 px-2 rounded-md text-sm border border-dashed border-surface-600 text-gray-300'>
-                <FaCube />
-                DROPS
-            </button>
+          <div className="p-2 border-t border-surface-700 flex gap-1">
+              <button className='flex-1 flex items-center justify-center gap-2 bg-[#191b24] hover:border-gray-500 py-2.5 px-2 rounded-md text-sm border border-dashed border-surface-600 text-gray-300'>
+                  <FaRocket />
+                  BOOSTS
+              </button>
+              <button className='flex-1 flex items-center justify-center gap-2 bg-[#191b24] hover:border-gray-500 py-2.5 px-2 rounded-md text-sm border border-dashed border-surface-600 text-gray-300'>
+                  <FaCube />
+                  DROPS
+              </button>
+          </div>
         </div>
       </aside>
 
