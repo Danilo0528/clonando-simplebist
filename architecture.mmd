@@ -1,0 +1,74 @@
+graph TB
+    subgraph "Client Layer"
+        A[Web Browser / Mobile App]
+    end
+    
+    subgraph "Presentation Layer"
+        B[React Frontend]
+        C[Dashboard UI]
+        D[Faucet UI]
+        E[PTC UI]
+        F[Mining UI]
+        G[Withdraw UI]
+    end
+    
+    subgraph "API Gateway"
+        H[Next.js API Routes]
+    end
+    
+    subgraph "Application Services"
+        I[Auth Service]
+        J[Economy Service]
+        K[Faucet Service]
+        L[PTC Service]
+        M[Mining Service]
+        N[Withdrawal Service]
+        O[Progression Service]
+    end
+    
+    subgraph "Data Layer"
+        P[PostgreSQL DB]
+        Q[Redis Cache]
+    end
+    
+    subgraph "External Services"
+        R[Crypto Wallet APIs]
+        S[Payment Processors]
+        T[Third-party Ad Networks]
+    end
+    
+    A --> B
+    B --> C
+    B --> D
+    B --> E
+    B --> F
+    B --> G
+    C --> H
+    D --> H
+    E --> H
+    F --> H
+    G --> H
+    H --> I
+    H --> J
+    H --> K
+    H --> L
+    H --> M
+    H --> N
+    H --> O
+    I --> P
+    I --> Q
+    J --> P
+    J --> Q
+    K --> P
+    K --> Q
+    L --> P
+    L --> Q
+    M --> P
+    M --> Q
+    N --> P
+    N --> Q
+    O --> P
+    O --> Q
+    N --> R
+    L --> T
+    N --> S

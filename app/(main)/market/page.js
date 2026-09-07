@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { FaShoppingCart, FaSearch, FaFilter, FaCoins, FaTag, FaBoxOpen } from 'react-icons/fa';
+import { HardwareIcon, SoftwareIcon } from '../../../components/icons/CustomIcons';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -74,8 +75,8 @@ export default function MarketPage() {
 
   const getItemIcon = (type) => {
     switch(type) {
-      case 'hardware': return '⛏️';
-      case 'consumable': return '⚡';
+      case 'hardware': return <HardwareIcon width={80} height={80}/>;
+      case 'consumable': return <SoftwareIcon width={80} height={80}/>;
       case 'booster': return '🚀';
       default: return '📦';
     }

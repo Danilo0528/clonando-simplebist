@@ -1,11 +1,12 @@
 'use client';
 
-import { FaGem, FaServer, FaBook, FaLaptop, FaBars } from 'react-icons/fa';
+import { FaGem, FaBars } from 'react-icons/fa';
+import { HardwareIcon, SoftwareIcon, SecurityIcon } from '../icons/CustomIcons';
 
 const hardwareItems = [
-    { label: 'HW', icon: <FaServer size={28} className="text-red-400"/>, count: 219 },
-    { label: 'SW', icon: <FaBook size={28} className="text-blue-400"/>, count: 142 },
-    { label: 'ADM', icon: <FaLaptop size={28} className="text-purple-400"/>, count: 120 },
+    { label: 'HW', icon: <HardwareIcon width={40} height={40}/>, count: 219 },
+    { label: 'SW', icon: <SoftwareIcon width={40} height={40}/>, count: 142 },
+    { label: 'ADM', icon: <SecurityIcon width={40} height={40}/>, count: 120 },
 ];
 
 export default function EquipmentPanel() {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaPlusCircle, FaBullhorn, FaCrown, FaGift, FaStar, FaLink, FaInfoCircle, FaExclamationTriangle, FaMegaphone } from 'react-icons/fa';
+import { FaPlusCircle, FaBullhorn, FaCrown, FaGift, FaStar, FaLink, FaInfoCircle, FaExclamationTriangle } from 'react-icons/fa';
 
 const typeIcons = {
     info: FaInfoCircle,
@@ -124,7 +124,7 @@ export default function OtherPage() {
                     <div className="text-center py-8 text-gray-400">Loading announcements...</div>
                 ) : announcements.length === 0 ? (
                     <div className="text-center py-8 text-gray-400">
-                        <FaMegaphone className="text-4xl mx-auto mb-2 opacity-50" />
+                        <FaInfoCircle className="text-4xl mx-auto mb-2 opacity-50" />
                         <p>No announcements at this time</p>
                     </div>
                 ) : (
