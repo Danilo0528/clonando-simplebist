@@ -102,3 +102,15 @@ model Withdrawal {
   
   @@index([userId])
 }
+
+model PTCAd {
+  id            Int      @id @default(autoincrement())
+  title         String
+  description   String?
+  reward        Float
+  estimatedTime Int      // in seconds
+  url           String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

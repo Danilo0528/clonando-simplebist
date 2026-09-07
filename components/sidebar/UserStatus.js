@@ -16,7 +16,7 @@ const UserStatus = () => {
 
     // Valores
     const userLevel = userData?.levelInfo?.level || 1;
-    const currentEnergy = userData?.balances?.energy || 100;
+    const currentEnergy = userData?.balances?.energy ?? 0;
     const energyRegenerationRate = userData?.energyRegenerationRate || 8;
     const maxEnergy = userData?.balances?.maxEnergy || (100 + (userLevel * 10));
     
