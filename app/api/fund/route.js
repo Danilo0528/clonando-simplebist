@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import prisma from '../../../lib/prisma';
+import prisma from '../../../lib/prisma.mjs';
 
 // GET - Fetch user's deposit addresses and balance info
 export async function GET(request) {

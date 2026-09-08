@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getUserFromRequest } from '../../../lib/auth';
-import prisma from '../../../lib/prisma';
+import prisma from '../../../lib/prisma.mjs';
 import { 
   getMarketItems, 
   purchaseMarketItem, 

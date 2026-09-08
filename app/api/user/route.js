@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '../../../lib/prisma';
+import prisma from '../../../lib/prisma.mjs';
 import { getUserFromRequest } from '../../../lib/auth';
 import { getXpProgressToNextLevel } from '../../../lib/progression';
 import { syncUserEnergy, calculateCurrentEnergy } from '../../../lib/energy.mjs'; // Importar el nuevo módulo
