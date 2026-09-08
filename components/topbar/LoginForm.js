@@ -28,7 +28,7 @@ const LoginForm = ({ onLogin, onCancel, error }) => {
       )}
       <input
         type="text"
-        placeholder="Username"
+        placeholder="Username or Email"
         value={loginCredentials.username}
         onChange={(e) => setLoginCredentials({...loginCredentials, username: e.target.value})}
         className="w-full p-2 bg-[#1e202b] rounded text-sm"

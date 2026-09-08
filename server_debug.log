@@ -30,3 +30,17 @@ Please manually install OpenSSL and try installing Prisma again.
  ✓ Compiled in 2.9s (284 modules)
  ✓ Compiled in 2s (284 modules)
  ✓ Compiled in 5s (342 modules)
+ ✓ Compiled in 3.1s (284 modules)
+ ✓ Compiled in 2.3s (284 modules)
+ ⨯ ./app/auth/login/page.js:6:1
+Module not found: Can't resolve '../../components/ClientOnly'
+[0m [90m 4 |[39m [36mimport[39m { useRouter } [36mfrom[39m [32m'next/navigation'[39m[33m;[39m[0m
+[0m [90m 5 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m'next/link'[39m[33m;[39m[0m
+[0m[31m[1m>[22m[39m[90m 6 |[39m [36mimport[39m [33mClientOnly[39m [36mfrom[39m [32m'../../components/ClientOnly'[39m[33m;[39m [90m// Import ClientOnly[39m[0m
+[0m [90m   |[39m [31m[1m^[22m[39m[0m
+[0m [90m 7 |[39m[0m
+[0m [90m 8 |[39m [36mexport[39m [36mdefault[39m [36mfunction[39m [33mLoginPage[39m() {[0m
+[0m [90m 9 |[39m   [36mconst[39m [formData[33m,[39m setFormData] [33m=[39m useState({ identifier[33m:[39m [32m''[39m[33m,[39m password[33m:[39m [32m''[39m })[33m;[39m[0m
+
+https://nextjs.org/docs/messages/module-not-found
+ ✓ Compiled in 3.4s (285 modules)

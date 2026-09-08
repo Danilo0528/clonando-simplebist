@@ -1,22 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { setToken } from '../../../lib/tokenManager';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({ identifier: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const router = useRouter();
-
-  useEffect(() => {
-    // Check if user is already logged in
-    const token = localStorage.getItem('token');
-    if (token) {
-      router.push('/dashboard');
-    }
-  }, [router]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -25,10 +18,10 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage('');
+    setMessage('Enviando...');
 
     try {
-      const response = await fetch('/api/auth/login', {  // This now points to the App Router endpoint
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,30 +29,27 @@ export default function LoginPage() {
         body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('La respuesta no es JSON:', text);
+        setMessage('Error de comunicación con el servidor');
+        setLoading(false);
+        return;
+      }
 
       if (response.ok) {
-        // Store token using the token manager
-        const { setToken } = await import('../../../lib/tokenManager');
         setToken(data.token);
-
-        // Verify token was actually saved
-        const savedToken = localStorage.getItem('token');
-        if (!savedToken) {
-          setMessage('Error saving session. Please try again.');
-          setLoading(false);
-          return;
-        }
-
         setMessage('Login successful! Redirecting...');
-        
-        // Wait for token to be fully committed
-        await new Promise(resolve => setTimeout(resolve, 500));
         router.push('/dashboard');
       } else {
+        console.error('Login failed, server response:', data);
         setMessage(data.message || 'Login failed');
       }
     } catch (error) {
+      console.error('Error durante el login:', error);
       setMessage('An error occurred during login');
     } finally {
       setLoading(false);
@@ -81,7 +71,6 @@ export default function LoginPage() {
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <input type="hidden" name="remember" defaultValue="true" />
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="identifier" className="sr-only">
@@ -93,7 +82,6 @@ export default function LoginPage() {
                 type="text"
                 autoComplete="username"
                 required
-                suppressHydrationWarning={true}
                 value={formData.identifier}
                 onChange={handleChange}
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
@@ -110,20 +98,11 @@ export default function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 required
-                suppressHydrationWarning={true}
                 value={formData.password}
                 onChange={handleChange}
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Password"
               />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="text-sm">
-              <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
-                Forgot your password?
-              </a>
             </div>
           </div>
 
@@ -139,7 +118,7 @@ export default function LoginPage() {
 
           {message && (
             <div className={`rounded-md p-4 ${
-              message.includes('success') ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+              message.includes('successful') ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
             }`}>
               <p className="text-sm text-center">{message}</p>
             </div>

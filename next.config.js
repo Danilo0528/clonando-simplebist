@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    allowedDevOrigins: ['9000-firebase-clonando-simplebist-1770091277015.cluster-hkcruqmgzbd2aqcdnktmz6k7ba.cloudworkstations.dev'],
     images: {
         remotePatterns: [
             {

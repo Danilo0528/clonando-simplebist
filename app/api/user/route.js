@@ -1,63 +1,61 @@
 import { NextResponse } from 'next/server';
-import prisma from '../../../lib/prisma.mjs';
-import { getUserFromRequest } from '../../../lib/auth';
+import { createClient } from '../../../../utils/supabase/server';
+import { cookies } from 'next/headers';
 import { getXpProgressToNextLevel } from '../../../lib/progression';
-import { syncUserEnergy, calculateCurrentEnergy } from '../../../lib/energy.mjs'; // Importar el nuevo módulo
+import { syncUserEnergy, calculateCurrentEnergy } from '../../../lib/energy.mjs';
 
 export async function GET(request) {
   try {
-    const authHeader = request.headers.get('authorization');
-    const cookieHeader = request.headers.get('cookie');
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
 
-    const mockReq = {
-      headers: {
-        authorization: authHeader,
-        cookie: cookieHeader,
-      },
-    };
+    // 1. Obtener usuario desde Supabase Auth
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    const user = await getUserFromRequest(mockReq);
-
-    if (!user) {
+    if (authError || !user) {
       return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
     }
 
-    // Fetch full user data from Prisma
-    let fullUser = await prisma.user.findUnique({
-      where: { id: parseInt(user.id) },
-    });
+    // 2. Fetch full user data from Supabase 'profiles' table (asumiendo este nombre)
+    const { data: fullUser, error: dbError } = await supabase
+      .from('profiles') // O 'users' dependiendo de tu esquema
+      .select('*')
+      .eq('id', user.id)
+      .single();
 
-    if (!fullUser) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    if (dbError || !fullUser) {
+      console.error('Error fetching user profile:', dbError);
+      return NextResponse.json({ message: 'User profile not found' }, { status: 404 });
     }
 
-    // Usar el módulo centralizado para sincronizar la energía en DB si es necesario
-    fullUser = await syncUserEnergy(fullUser);
+    // 3. Usar el módulo centralizado para sincronizar la energía en DB si es necesario
+    // Nota: syncUserEnergy espera un objeto user compatible con Prisma.
+    // Firebase/Supabase podría requerir ajustar esta función si usa tipos diferentes.
+    const syncedUser = await syncUserEnergy(fullUser);
 
-    // Obtener los datos calculados de energía actual
-    const energyData = calculateCurrentEnergy(fullUser);
+    // 4. Obtener los datos calculados de energía actual
+    const energyData = calculateCurrentEnergy(syncedUser);
 
-    // Calculate level progression details using the new function
-    const progression = getXpProgressToNextLevel(fullUser.xp);
+    // 5. Calculate level progression details
+    const progression = getXpProgressToNextLevel(syncedUser.xp);
 
     // Construct the response object expected by the frontend
     return NextResponse.json({
-      id: fullUser.id,
-      username: fullUser.username,
-      email: fullUser.email,
-      tokenBalance: fullUser.tokenBalance, 
-      boundTokenBalance: fullUser.boundTokenBalance, 
-      energyPoints: energyData.current, // Current energy
+      id: syncedUser.id,
+      username: syncedUser.username,
+      email: syncedUser.email,
+      tokenBalance: syncedUser.tokenBalance, 
+      boundTokenBalance: syncedUser.boundTokenBalance, 
+      energyPoints: energyData.current,
       level: progression.currentLevel, 
-      xp: fullUser.xp,
+      xp: syncedUser.xp,
       xpInCurrentLevel: progression.xpInCurrentLevel, 
       xpNeededForNextLevel: progression.xpNeededForNextLevel, 
       progressPercentage: progression.progressPercentage, 
-      createdAt: fullUser.createdAt,
-      lastFaucetClaim: fullUser.lastFaucetClaim, 
-      isAdmin: fullUser.isAdmin, 
-      isActive: fullUser.isActive, 
-      // Include energy-related information
+      createdAt: syncedUser.createdAt,
+      lastFaucetClaim: syncedUser.lastFaucetClaim, 
+      isAdmin: syncedUser.isAdmin, 
+      isActive: syncedUser.isActive, 
       maxEnergy: energyData.max,
       energyRegenerationRate: 8, 
       lastEnergyUpdate: energyData.lastUpdate
@@ -65,7 +63,5 @@ export async function GET(request) {
   } catch (error) {
     console.error('Error in user GET route:', error);
     return NextResponse.json({ message: error.message }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }

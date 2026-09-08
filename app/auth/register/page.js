@@ -40,6 +40,7 @@ export default function RegisterPage() {
           router.push('/auth/login');
         }, 2000);
       } else {
+        console.error('Registration failed, server response:', data);
         setMessage(data.message || 'Registration failed');
       }
     } catch (error) {

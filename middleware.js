@@ -1,31 +1,59 @@
-
 import { NextResponse } from 'next/server';
+import { createServerClient } from "@supabase/ssr";
 
-// This function can be marked `async` if using `await` inside
-export function middleware(request) {
-  const token = request.cookies.get('token'); // Assuming the token is stored in a cookie named 'token'
+export async function middleware(request) {
+  // Create an unmodified response
+  let supabaseResponse = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
 
-  // If the user is trying to access the main app and doesn't have a token,
-  // redirect them to the login page.
-  if (!token) {
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({
+            request,
+          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
+        },
+      },
+    },
+  );
+
+  // Get session
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  console.log('Middleware - Cookies recibidas:', request.cookies.getAll().map(c => c.name));
+  console.log('Middleware - ¿Sesión válida?:', !!session);
+
+  // If no session and NOT on an auth route, redirect to login
+  if (!session && !request.nextUrl.pathname.startsWith('/auth')) {
+    console.log('Middleware - Sesión no encontrada, redirigiendo a login');
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
-  // If the user has a token, let them proceed.
-  return NextResponse.next();
+  return supabaseResponse;
 }
 
-// See "Matching Paths" below to learn more
 export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - auth (authentication routes)
+     * - api/auth (authentication routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|auth|_next/static|_next/image|favicon.ico).)*',
+    '/((?!api/auth|_next/static|_next/image|favicon.ico).*)',
   ],
 };

@@ -1,61 +1,39 @@
 import { NextResponse } from 'next/server';
-import prisma from '../../../../lib/prisma.mjs';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+import { createClient } from '../../../../utils/supabase/server';
+import { cookies } from 'next/headers';
 
 export async function POST(request) {
   try {
-    const { identifier, password } = await request.json();
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    
+    const body = await request.json();
+    const { identifier, password } = body;
 
-    let user;
-    if (identifier.includes('@')) {
-      user = await prisma.user.findUnique({
-        where: { email: identifier },
-      });
-    } else {
-      user = await prisma.user.findUnique({
-        where: { username: identifier },
-      });
+    if (!identifier || !password) {
+      return NextResponse.json({ message: 'Credenciales incompletas' }, { status: 400 });
     }
 
-    if (!user) {
-      return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
-    }
-
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '24h' });
-
-    const response = NextResponse.json({ 
-      user: { 
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        isAdmin: user.isAdmin
-      },
-      token 
+    // Configuración de Supabase para login
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: identifier,
+      password: password,
     });
 
-    // Set token in cookie as well for middleware access
-    response.cookies.set('token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 86400 // 24h
-    });
+    if (error) {
+      console.error('Login error:', error);
+      return NextResponse.json({ message: error.message }, { status: 401 });
+    }
 
-    return response;
+    // Supabase maneja cookies automáticamente si está configurado en el middleware/utils
+    return NextResponse.json({ 
+      user: { id: data.user.id, email: data.user.email },
+      token: data.session.access_token 
+    });
 
   } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json({ message: 'An error occurred during login' }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
+    console.error('System error:', error);
+    // Aseguramos que siempre sea JSON
+    return NextResponse.json({ message: 'Error interno del servidor' }, { status: 500 });
   }
 }

@@ -15,18 +15,18 @@ const GuestMenu = () => {
   const handleLogin = async (credentials) => {
     try {
       setError('');
+      const loginPayload = { identifier: credentials.username, password: credentials.password };
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials),
+        body: JSON.stringify(loginPayload),
       });
 
       const data = await res.json();
 
-      if (res.ok && data.success) {
-        // Store token in localStorage for client-side API calls
-        localStorage.setItem('token', data.user.token || '');
-        // Reload to update authentication state
+      if (res.ok && data.token) {
+        const { setToken } = await import('../../lib/tokenManager');
+        setToken(data.token);
         window.location.href = '/dashboard';
         return true;
       } else {
@@ -35,7 +35,6 @@ const GuestMenu = () => {
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
-      console.error('Login error:', err);
       return false;
     }
   };

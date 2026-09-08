@@ -4,8 +4,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -36,6 +37,7 @@ model User {
   // Relaciones
   inventory         InventoryItem[]
   withdrawals       Withdrawal[]
+  rentalContracts   RentalContract[]
 }
 
 model InventoryItem {
@@ -113,4 +115,17 @@ model PTCAd {
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model RentalContract {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  marketItemId    Int
+  amountPaid      Float
+  expectedPayout  Float
+  startTime       DateTime @default(now())
+  endTime         DateTime
+  status          String   @default("active") // active, completed
+  
+  user            User     @relation(fields: [userId], references: [id])
 }

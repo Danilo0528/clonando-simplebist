@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getUserFromRequest } from '../../../lib/auth';
-import { convertToBound } from '../../../lib/economy';
+import { getUserFromRequest } from '../../../../lib/auth';
+import { convertToBound } from '../../../../lib/economy';
 
 export async function POST(request) {
   try {
