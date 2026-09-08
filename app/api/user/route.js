@@ -45,7 +45,6 @@ export async function GET(request) {
       id: fullUser.id,
       username: fullUser.username,
       email: fullUser.email,
-      balance: fullUser.balance, 
       tokenBalance: fullUser.tokenBalance, 
       boundTokenBalance: fullUser.boundTokenBalance, 
       energyPoints: energyData.current, // Current energy

@@ -68,8 +68,6 @@ export const StatsProvider = ({ children }) => {
                 const transformedData = {
                     ...data,
                     balances: {
-                        simplebits: data.balance || 0,
-                        sc: data.balance || 0,
                         energy: data.energyPoints || 0,
                         level: data.level || 1,
                         maxEnergy: data.maxEnergy || 100,
@@ -91,8 +89,7 @@ export const StatsProvider = ({ children }) => {
                     },
                 };
 
-                const updatedUserData = calculateCurrentEnergy(transformedData);
-                setUserData(updatedUserData);
+                setUserData(transformedData);
                 setHasLoaded(true);
             } else if (res.status === 401) {
                 console.log('Token expired in StatsContext, cleaning up...');
@@ -181,8 +178,6 @@ export const StatsProvider = ({ children }) => {
                         ...prev,
                         balances: {
                             ...prev.balances,
-                            simplebits: data.balance || prev.balances.simplebits,
-                            sc: data.balance || prev.balances.sc,
                             energy: data.energyPoints || prev.balances.energy,
                             tokenBalance: data.tokenBalance || prev.balances.tokenBalance,
                             boundTokenBalance: data.boundTokenBalance || prev.balances.boundTokenBalance,
@@ -207,30 +202,6 @@ export const StatsProvider = ({ children }) => {
         
         return () => clearInterval(syncInterval);
     }, [isClient, hasLoaded, syncBalances]);
-
-    // Función para calcular la energía actual considerando regeneración
-    const calculateCurrentEnergy = (userData) => {
-        const lastUpdate = new Date(userData.lastEnergyUpdate);
-        const now = new Date();
-        const timeDiff = now - lastUpdate;
-
-        const minutesPassed = timeDiff / (1000 * 60);
-        const fiveMinuteCycles = Math.floor(minutesPassed / 5);
-        const energyRegenerated = fiveMinuteCycles * (userData.energyRegenerationRate || 8);
-        const maxEnergy = 100 + ((userData.levelInfo?.level || 1) * 10);
-        const currentEnergy = Math.min(
-            (userData.balances?.energy || 0) + energyRegenerated,
-            maxEnergy
-        );
-
-        return {
-            ...userData,
-            balances: {
-                ...userData.balances,
-                energy: currentEnergy
-            }
-        };
-    };
 
     // Update balance function
     const updateBalance = useCallback((resource, amount) => {

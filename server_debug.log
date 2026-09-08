@@ -1,0 +1,24 @@
+
+> out@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Ready in 8.1s
+ ✓ Compiled /middleware in 503ms
+ ✓ Compiled (72 modules)
+ ○ Compiling /auth/login ...
+ ✓ Compiled /auth/login in 9.5s (537 modules)
+ GET /auth/login 200 in 10290ms
+ ○ Compiling /api/auth/login ...
+ ✓ Compiled /api/auth/login in 2.4s (380 modules)
+prisma:warn Prisma failed to detect the libssl/openssl version to use, and may not work as expected. Defaulting to "openssl-1.1.x".
+Please manually install OpenSSL and try installing Prisma again.
+ POST /api/auth/login 200 in 3410ms
+ ✓ Compiled in 4.9s (270 modules)
+ ✓ Compiled in 1533ms (270 modules)
+ ✓ Compiled in 1443ms (270 modules)
+ ✓ Compiled in 397ms (270 modules)
