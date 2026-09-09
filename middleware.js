@@ -33,11 +33,15 @@ export async function middleware(request) {
   // Get session
   const { data: { session } } = await supabase.auth.getSession();
   
+  // Verify also the custom 'token' cookie
+  const customToken = request.cookies.get('token');
+  
   console.log('Middleware - Cookies recibidas:', request.cookies.getAll().map(c => c.name));
-  console.log('Middleware - ¿Sesión válida?:', !!session);
+  console.log('Middleware - ¿Sesión Supabase?:', !!session);
+  console.log('Middleware - ¿Token personalizado?:', !!customToken);
 
-  // If no session and NOT on an auth route, redirect to login
-  if (!session && !request.nextUrl.pathname.startsWith('/auth')) {
+  // If no session AND no custom token, and NOT on an auth route, redirect to login
+  if (!session && !customToken && !request.nextUrl.pathname.startsWith('/auth')) {
     console.log('Middleware - Sesión no encontrada, redirigiendo a login');
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }

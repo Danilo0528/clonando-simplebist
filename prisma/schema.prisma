@@ -10,16 +10,16 @@ datasource db {
 }
 
 model User {
-  id                Int      @id @default(autoincrement())
+  id                String   @id // Cambiado a String para UUID de Supabase
   email             String   @unique
   username          String   @unique
-  password          String
+  password          String?  // Supabase Auth maneja la pass, hacemos opcional
   balance           Float    @default(0)
   tokenBalance      Float    @default(0)
   boundTokenBalance Float    @default(0)
   energyPoints      Int      @default(100)
   hashpowerVirtual  Float    @default(0)
-  totalHashrate     Float    @default(0) // Hashrate total acumulado del hardware
+  totalHashrate     Float    @default(0) 
   level             Int      @default(1)
   xp                Int      @default(0)
   isAdmin           Boolean  @default(false)
@@ -27,12 +27,12 @@ model User {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   lastFaucetClaim   DateTime?
-  lastMiningClaim   DateTime? // Última vez que reclamó recompensas de minería
+  lastMiningClaim   DateTime? 
   lastEnergyUpdate  DateTime?
   failedLoginAttempts Int    @default(0)
   lockoutExpiresAt  DateTime?
-  lastFaucetRequest DateTime? // Para rate limiting anti-bots
-  faucetAttempts    Int      @default(0) // Contador de intentos en ventana de tiempo
+  lastFaucetRequest DateTime? 
+  faucetAttempts    Int      @default(0) 
   
   // Relaciones
   inventory         InventoryItem[]
@@ -42,14 +42,14 @@ model User {
 
 model InventoryItem {
   id          Int      @id @default(autoincrement())
-  userId      Int
-  itemId      Int      // ID del item comprado
-  itemName    String   // Nombre del item
-  itemType    String   // hardware, consumable, booster
-  hashrate    Float    @default(0) // Hashrate que aporta este item
+  userId      String   // Cambiado a String
+  itemId      Int      
+  itemName    String   
+  itemType    String   
+  hashrate    Float    @default(0) 
   quantity    Int      @default(1)
   purchasedAt DateTime @default(now())
-  expiresAt   DateTime? // Para items temporales
+  expiresAt   DateTime? 
   
   user        User     @relation(fields: [userId], references: [id])
   
@@ -61,8 +61,8 @@ model MarketItem {
   name        String   @unique
   description String?
   price       Float
-  type        String   // hardware, consumable, booster
-  hashrate    Float    @default(0) // Hashrate que aporta (si es hardware)
+  type        String   
+  hashrate    Float    @default(0) 
   image       String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -73,7 +73,7 @@ model Announcement {
   id          Int      @id @default(autoincrement())
   title       String
   content     String
-  type        String   @default("info") // info, update, event, warning
+  type        String   @default("info") 
   isActive    Boolean  @default(true)
   priority    Int      @default(0)
   createdAt   DateTime @default(now())
@@ -90,13 +90,13 @@ model Setting {
 
 model Withdrawal {
   id              Int      @id @default(autoincrement())
-  userId          Int
+  userId          String   // Cambiado a String
   amount          Float
   cryptoCurrency  String
   address         String
   fee             Float    @default(0)
   netAmount       Float
-  status          String   @default("pending") // pending, processing, completed, rejected
+  status          String   @default("pending") 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   
@@ -110,7 +110,7 @@ model PTCAd {
   title         String
   description   String?
   reward        Float
-  estimatedTime Int      // in seconds
+  estimatedTime Int      
   url           String
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
@@ -119,13 +119,13 @@ model PTCAd {
 
 model RentalContract {
   id              Int      @id @default(autoincrement())
-  userId          Int
+  userId          String   // Cambiado a String
   marketItemId    Int
   amountPaid      Float
   expectedPayout  Float
   startTime       DateTime @default(now())
   endTime         DateTime
-  status          String   @default("active") // active, completed
+  status          String   @default("active") 
   
   user            User     @relation(fields: [userId], references: [id])
 }

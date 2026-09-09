@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '../../../../utils/supabase/server';
 import { cookies } from 'next/headers';
+import { generateToken } from '../../../../lib/auth';
 
 export async function POST(request) {
   try {
@@ -25,10 +26,13 @@ export async function POST(request) {
       return NextResponse.json({ message: error.message }, { status: 401 });
     }
 
+    // Generar token personalizado para compatibilidad con las APIs de backend
+    const token = generateToken(data.user);
+
     // Supabase maneja cookies automáticamente si está configurado en el middleware/utils
     return NextResponse.json({ 
       user: { id: data.user.id, email: data.user.email },
-      token: data.session.access_token 
+      token: token 
     });
 
   } catch (error) {
