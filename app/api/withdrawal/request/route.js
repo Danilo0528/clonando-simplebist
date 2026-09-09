@@ -54,8 +54,6 @@ export async function GET(request) {
   } catch (error) {
     console.error('Error in withdrawal GET route:', error);
     return NextResponse.json({ message: error.message }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -98,7 +96,5 @@ export async function POST(request) {
       { message: error.message || 'Failed to process withdrawal request' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

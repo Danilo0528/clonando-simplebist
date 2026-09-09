@@ -30,7 +30,7 @@ export function useWallet() {
       }
 
       const balancesData = await balancesRes.json();
-      setCurrentBalance(balancesData.balances?.tokenBalance || 0);
+      setCurrentBalance(balancesData.tokenBalance || 0);
 
       // Fetch withdrawal history
       const withdrawalsRes = await fetch('/api/withdrawal/request', {
@@ -58,7 +58,7 @@ export function useWallet() {
       // Fetch mining history (as earned transactions)
       // For now, we'll use the current balance as total earned
       // In a production app, you'd have a proper transaction history table
-      setTotalEarned(balancesData.balances?.tokenBalance || 0);
+      setTotalEarned(balancesData.tokenBalance || 0);
       setTransactions(withdrawalTransactions);
 
     } catch (err) {

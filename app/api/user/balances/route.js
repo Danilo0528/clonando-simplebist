@@ -23,9 +23,8 @@ export async function GET(request) {
 
     // ✅ Fetch user balances from database
     const fullUser = await prisma.user.findUnique({
-      where: { id: parseInt(user.id) },
+      where: { id: user.id },
       select: {
-        balance: true,
         tokenBalance: true,
         boundTokenBalance: true,
         energyPoints: true,
@@ -45,7 +44,6 @@ export async function GET(request) {
     const miningReward = await calculateAccumulatedMiningReward(user.id);
 
     return NextResponse.json({
-      balance: fullUser.balance,
       tokenBalance: fullUser.tokenBalance,
       boundTokenBalance: fullUser.boundTokenBalance,
       energyPoints: fullUser.energyPoints,
@@ -58,7 +56,5 @@ export async function GET(request) {
   } catch (error) {
     console.error('Error in balances GET route:', error);
     return NextResponse.json({ message: error.message }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }

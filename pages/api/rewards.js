@@ -1,43 +1,20 @@
-import jwt from 'jsonwebtoken';
 import prisma from '../../lib/prisma.mjs';
+import { getUserFromRequest } from '../../lib/auth';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
 const REWARD_AMOUNT = 100; // The amount of currency to award
 const COOLDOWN = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 export default async function handler(req, res) {
-  const { authorization } = req.headers;
-  if (!authorization) {
+  const user = await getUserFromRequest(req);
+  if (!user) {
     return res.status(401).json({ message: 'Authentication required' });
   }
 
-  let userId;
-  try {
-    const token = authorization.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
-    userId = decoded.userId;
-    
-    // Verify user exists
-    const user = await prisma.user.findUnique({
-      where: { id: parseInt(userId) },
-    });
-    
-    if (!user) {
-      return res.status(401).json({ message: 'User not found' });
-    }
-  } catch (error) {
-    return res.status(401).json({ message: 'Invalid token' });
-  }
-
   const now = Date.now();
-  
-  // Get user with lastDailyReward field
-  const user = await prisma.user.findUnique({
-    where: { id: parseInt(userId) },
-  });
-  
+
   // Use lastFaucetClaim or createdAt as fallback for lastDailyReward
-  const lastClaimed = user.lastFaucetClaim ? new Date(user.lastFaucetClaim).getTime() : null;
+  const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+  const lastClaimed = dbUser.lastFaucetClaim ? new Date(dbUser.lastFaucetClaim).getTime() : null;
   const canClaim = !lastClaimed || (now - lastClaimed > COOLDOWN);
 
   if (req.method === 'GET') {
@@ -51,16 +28,16 @@ export default async function handler(req, res) {
     if (canClaim) {
       // Update user with new balance and last claim time
       const updatedUser = await prisma.user.update({
-        where: { id: parseInt(userId) },
+        where: { id: user.id },
         data: {
-          balance: user.balance + REWARD_AMOUNT,
+          tokenBalance: { increment: REWARD_AMOUNT },
           lastFaucetClaim: new Date(),
         },
       });
-      
+
       res.status(200).json({
         message: `You've claimed your ${REWARD_AMOUNT} Bits reward!`,
-        newBalance: updatedUser.balance,
+        newTokenBalance: updatedUser.tokenBalance,
         nextClaimTime: now + COOLDOWN,
       });
     } else {

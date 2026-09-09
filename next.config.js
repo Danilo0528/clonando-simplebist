@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     allowedDevOrigins: ['3000-firebase-clonando-simplebist-1770091277015.cluster-hkcruqmgzbd2aqcdnktmz6k7ba.cloudworkstations.dev'],

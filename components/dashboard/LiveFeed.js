@@ -20,7 +20,7 @@ export default function LiveFeed() {
         const response = await fetch('/api/events');
         const data = await response.json();
         const formattedData = data.map(event => ({
-          user: event.user.username,
+          user: event.user?.username || (event.userId ? `User ${event.userId}` : 'Someone'),
           earnings: event.amount,
           action: 'Just earned',
         }));

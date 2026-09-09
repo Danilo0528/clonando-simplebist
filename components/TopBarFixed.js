@@ -23,7 +23,7 @@ const TopBarFixed = () => {
 
   // Construct the balances object that the TokenBalances component expects
   const balances = userData ? {
-    simplebits: userData.balances?.simplebits || userData.balances?.sc || 0,
+    simplebits: userData.balances?.tokenBalance || userData.balances?.simplebits || userData.balances?.sc || 0,
     energy: userData.balances?.energy || 0
   } : null;
 

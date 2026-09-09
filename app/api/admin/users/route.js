@@ -92,7 +92,7 @@ export async function PUT(request) {
     }
 
     const updatedUser = await prisma.user.update({
-      where: { id: parseInt(id) },
+      where: { id },
       data: {
         ...(typeof balance === 'number' && { balance }),
         ...(typeof tokenBalance === 'number' && { tokenBalance }),
@@ -145,7 +145,7 @@ export async function DELETE(request) {
     }
 
     // Don't allow deleting yourself
-    if (parseInt(id) === user.id) {
+    if (id === user.id) {
       return NextResponse.json(
         { message: 'Cannot delete your own account' },
         { status: 400 }
@@ -153,7 +153,7 @@ export async function DELETE(request) {
     }
 
     await prisma.user.delete({
-      where: { id: parseInt(id) },
+      where: { id },
     });
 
     return NextResponse.json({ message: 'User deleted successfully' });

@@ -15,11 +15,10 @@ export async function GET(request) {
     const userId = decoded.userId;
 
     const user = await prisma.user.findUnique({
-      where: { id: parseInt(userId) },
+      where: { id: userId },
       select: {
         id: true,
         username: true,
-        balance: true,
         tokenBalance: true,
         boundTokenBalance: true,
       }
@@ -36,7 +35,6 @@ export async function GET(request) {
     return NextResponse.json({
       depositAddress,
       balances: {
-        main: user.balance,
         token: user.tokenBalance,
         bound: user.boundTokenBalance,
       }
@@ -77,9 +75,7 @@ export async function POST(request) {
     const amountFloat = parseFloat(amount);
     let updateData = {};
 
-    if (type === 'main') {
-      updateData.balance = { increment: amountFloat };
-    } else if (type === 'token') {
+    if (type === 'token') {
       updateData.tokenBalance = { increment: amountFloat };
     } else if (type === 'bound') {
       updateData.boundTokenBalance = { increment: amountFloat };
@@ -88,12 +84,11 @@ export async function POST(request) {
     }
 
     const updatedUser = await prisma.user.update({
-      where: { id: parseInt(userId) },
+      where: { id: userId },
       data: updateData,
       select: {
         id: true,
         username: true,
-        balance: true,
         tokenBalance: true,
         boundTokenBalance: true,
       }
@@ -103,7 +98,6 @@ export async function POST(request) {
       success: true,
       message: `Successfully deposited ${amountFloat} to ${type} balance`,
       newBalances: {
-        main: updatedUser.balance,
         token: updatedUser.tokenBalance,
         bound: updatedUser.boundTokenBalance,
       }

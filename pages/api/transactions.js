@@ -1,31 +1,10 @@
-import jwt from 'jsonwebtoken';
-import prisma from '../../lib/prisma.mjs';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+import { getUserFromRequest } from '../../lib/auth';
 
 export default async function handler(req, res) {
-  const { authorization } = req.headers;
-  
-  if (!authorization) {
-    return res.status(401).json({ message: 'Authentication required' });
-  }
+  const user = await getUserFromRequest(req);
 
-  let userId;
-  try {
-    const token = authorization.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
-    userId = decoded.userId;
-    
-    // Verify user exists
-    const user = await prisma.user.findUnique({
-      where: { id: parseInt(userId) },
-    });
-    
-    if (!user) {
-      return res.status(401).json({ message: 'User not found' });
-    }
-  } catch (error) {
-    return res.status(401).json({ message: 'Invalid token' });
+  if (!user) {
+    return res.status(401).json({ message: 'Authentication required' });
   }
 
   // For now, return an empty array since we don't have a Transaction model

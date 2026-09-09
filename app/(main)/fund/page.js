@@ -11,9 +11,7 @@ export default function FundPage() {
   const [depositAddress, setDepositAddress] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
   const [depositType, setDepositType] = useState('token');
-  const [transferFrom, setTransferFrom] = useState('main');
-  const [transferTo, setTransferTo] = useState('token');
-  const [transferAmount, setTransferAmount] = useState('');
+  const [convertAmount, setConvertAmount] = useState('');
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [message, setMessage] = useState('');
@@ -104,16 +102,11 @@ export default function FundPage() {
     }
   };
 
-  const handleTransfer = async (e) => {
+  const handleConvert = async (e) => {
     e.preventDefault();
     
-    if (!transferAmount || parseFloat(transferAmount) <= 0) {
+    if (!convertAmount || parseFloat(convertAmount) <= 0) {
       setMessage('Please enter a valid amount');
-      return;
-    }
-
-    if (transferFrom === transferTo) {
-      setMessage('Source and destination must be different');
       return;
     }
 
@@ -122,61 +115,31 @@ export default function FundPage() {
 
     try {
       const token = localStorage.getItem('token');
-      
-      // Check if user has enough balance
-      const balanceKey = transferFrom === 'main' ? 'main' : transferFrom === 'token' ? 'token' : 'bound';
-      if (parseFloat(transferAmount) > balances[balanceKey]) {
-        setMessage('Insufficient balance');
-        setProcessing(false);
-        return;
-      }
 
-      // Deduct from source
-      const deductData = {};
-      if (transferFrom === 'main') {
-        deductData.balance = { decrement: parseFloat(transferAmount) };
-      } else if (transferFrom === 'token') {
-        deductData.tokenBalance = { decrement: parseFloat(transferAmount) };
-      } else {
-        deductData.boundTokenBalance = { decrement: parseFloat(transferAmount) };
-      }
-
-      // Add to destination
-      const addData = {};
-      if (transferTo === 'main') {
-        addData.balance = { increment: parseFloat(transferAmount) };
-      } else if (transferTo === 'token') {
-        addData.tokenBalance = { increment: parseFloat(transferAmount) };
-      } else {
-        addData.boundTokenBalance = { increment: parseFloat(transferAmount) };
-      }
-
-      const response = await fetch('/api/economy/transfer', {
+      const response = await fetch('/api/economy/convert', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: transferFrom,
-          to: transferTo,
-          amount: parseFloat(transferAmount),
+          amount: parseFloat(convertAmount),
         })
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        setMessage(data.message || 'Failed to transfer');
+        setMessage(data.message || 'Failed to convert');
       } else {
-        setMessage(`✅ Transfer successful!`);
-        setTransferAmount('');
+        setMessage(`✅ ${data.message}`);
+        setConvertAmount('');
         await fetchFundData();
-        toast.success('Transfer completed!');
+        toast.success('Conversion completed!');
       }
     } catch (error) {
-      console.error('Error transferring:', error);
-      setMessage('Error processing transfer');
+      console.error('Error converting:', error);
+      setMessage('Error processing conversion');
     } finally {
       setProcessing(false);
     }
@@ -197,22 +160,18 @@ export default function FundPage() {
           <FaMoneyBillWave className="text-green-400" />
           Fund Account
         </h1>
-        <p className="text-gray-400 mt-1">Add funds or transfer between balances</p>
+        <p className="text-gray-400 mt-1">Add funds or convert tokens to bound</p>
       </div>
 
       {/* Balance Overview */}
       {balances && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-[#2a2c3a] border border-gray-700 rounded-lg p-4">
-            <p className="text-sm text-gray-400">Main Balance</p>
-            <p className="text-2xl font-bold text-white">{balances.main?.toFixed(4)}</p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="bg-[#2a2c3a] border border-gray-700 rounded-lg p-4">
             <p className="text-sm text-gray-400">Token Balance</p>
             <p className="text-2xl font-bold text-yellow-400">{balances.token?.toFixed(4)}</p>
           </div>
           <div className="bg-[#2a2c3a] border border-gray-700 rounded-lg p-4">
-            <p className="text-sm text-gray-400">Bound Tokens</p>
+            <p className="text-sm text-gray-400">Bound Tokens (Withdrawable)</p>
             <p className="text-2xl font-bold text-green-400">{balances.bound?.toFixed(4)}</p>
           </div>
         </div>
@@ -231,14 +190,14 @@ export default function FundPage() {
           <FaPlus /> Deposit
         </button>
         <button
-          onClick={() => setActiveTab('transfer')}
+          onClick={() => setActiveTab('exchange')}
           className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
-            activeTab === 'transfer'
+            activeTab === 'exchange'
               ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
               : 'bg-[#2a2c3a] text-gray-400 hover:text-white border border-gray-700'
           }`}
         >
-          <FaExchangeAlt /> Transfer
+          <FaExchangeAlt /> Exchange Tokens
         </button>
       </div>
 
@@ -284,7 +243,6 @@ export default function FundPage() {
                       className="w-full bg-[#1e202b] border border-gray-700 rounded-lg px-4 py-2 text-white text-sm"
                     >
                       <option value="token">Token Balance (SBT)</option>
-                      <option value="main">Main Balance</option>
                       <option value="bound">Bound Token Balance</option>
                     </select>
                   </div>
@@ -314,53 +272,40 @@ export default function FundPage() {
           </div>
         )}
 
-        {activeTab === 'transfer' && (
+        {activeTab === 'exchange' && (
           <div>
-            <h2 className="text-lg font-semibold text-white mb-4">Transfer Between Balances</h2>
-            <form onSubmit={handleTransfer} className="space-y-4">
+            <h2 className="text-lg font-semibold text-white mb-1">Exchange Tokens → Bound</h2>
+            <p className="text-sm text-gray-400 mb-4">Convert tokens to bound tokens at a 1:1 rate. This conversion is one-way and irreversible. Bound tokens are required for withdrawals.</p>
+            <form onSubmit={handleConvert} className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-400 mb-2">From</label>
-                <select
-                  value={transferFrom}
-                  onChange={(e) => setTransferFrom(e.target.value)}
-                  className="w-full bg-[#1e202b] border border-gray-700 rounded-lg px-4 py-2 text-white text-sm"
-                >
-                  <option value="main">Main Balance ({balances?.main?.toFixed(4)})</option>
-                  <option value="token">Token Balance ({balances?.token?.toFixed(4)})</option>
-                  <option value="bound">Bound Token Balance ({balances?.bound?.toFixed(4)})</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">To</label>
-                <select
-                  value={transferTo}
-                  onChange={(e) => setTransferTo(e.target.value)}
-                  className="w-full bg-[#1e202b] border border-gray-700 rounded-lg px-4 py-2 text-white text-sm"
-                >
-                  <option value="token">Token Balance</option>
-                  <option value="main">Main Balance</option>
-                  <option value="bound">Bound Token Balance</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Amount</label>
+                <label className="block text-sm text-gray-400 mb-2">Amount to Convert</label>
                 <input
                   type="number"
                   step="any"
                   min="0"
-                  value={transferAmount}
-                  onChange={(e) => setTransferAmount(e.target.value)}
+                  value={convertAmount}
+                  onChange={(e) => setConvertAmount(e.target.value)}
                   placeholder="0.00"
                   className="w-full bg-[#1e202b] border border-gray-700 rounded-lg px-4 py-2 text-white text-sm"
                   required
                 />
               </div>
+              <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700 text-sm text-gray-300 flex flex-col gap-1">
+                <div className="flex justify-between">
+                  <span>Available to convert</span>
+                  <span className="text-yellow-400 font-medium">{balances?.token?.toFixed(4) ?? '0.0000'} SBT</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>You will receive</span>
+                  <span className="text-green-400 font-medium">{convertAmount ? parseFloat(convertAmount).toFixed(4) : '0.0000'} Bound</span>
+                </div>
+              </div>
               <button 
                 type="submit"
                 disabled={processing}
-                className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 text-white py-2 rounded text-sm font-medium transition-colors"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white py-2 rounded text-sm font-medium transition-colors"
               >
-                {processing ? 'Processing...' : 'Transfer'}
+                {processing ? 'Processing...' : 'Convert to Bound'}
               </button>
             </form>
           </div>
