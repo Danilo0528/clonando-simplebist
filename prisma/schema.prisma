@@ -123,8 +123,10 @@ model RentalContract {
   marketItemId    Int
   amountPaid      Float
   expectedPayout  Float
+  durationDays    Int      @default(0)
   startTime       DateTime @default(now())
   endTime         DateTime
+  lastClaimTime   DateTime?
   status          String   @default("active") 
   
   user            User     @relation(fields: [userId], references: [id])

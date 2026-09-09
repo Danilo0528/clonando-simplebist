@@ -46,9 +46,13 @@ const WithdrawModal = ({ isOpen, onClose, balance, onWithdrawalSuccess }) => {
         setFeedbackMessage('');
 
         try {
-            const res = await fetch('/api/withdraw', {
+            const token = localStorage.getItem('token');
+            const res = await fetch('/api/withdrawal/request', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                },
                 body: JSON.stringify({
                     crypto: selectedCrypto.symbol,
                     address: walletAddress,
@@ -67,7 +71,7 @@ const WithdrawModal = ({ isOpen, onClose, balance, onWithdrawalSuccess }) => {
             if(onWithdrawalSuccess) {
                 // Create a new transaction object to update the UI
                 const newTransaction = {
-                    id: data.transactionId,
+                    id: data.withdrawalId || data.transactionId || data.withdrawal?.id,
                     type: 'Withdrawal',
                     description: `Withdraw to ${selectedCrypto.symbol}`,
                     amount: -parseFloat(amount),

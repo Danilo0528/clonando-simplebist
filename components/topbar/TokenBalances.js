@@ -30,6 +30,7 @@ const TokenBalances = ({ balances }) => {
 
   const simplebits = displayBalance || 0;
   const energy = balances?.energy || userData?.balances?.energy || 0;
+  const bound = balances?.bound || userData?.balances?.boundTokenBalance || 0;
 
   return (
     <div className="relative group">
@@ -53,6 +54,12 @@ const TokenBalances = ({ balances }) => {
                 <FaCoins className="text-yellow-400" /> SimpleBits (SBT)
                 </span>
                 <span className="font-mono">{simplebits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+            <div className="px-3 py-2 flex justify-between items-center text-sm text-white">
+                <span className="flex items-center gap-2">
+                <FaCoins className="text-green-400" /> Bound (Ready to withdraw)
+                </span>
+                <span className="font-mono">{bound.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
             <div className="px-3 py-2 flex justify-between items-center text-sm text-white">
                 <span className="flex items-center gap-2">

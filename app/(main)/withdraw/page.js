@@ -35,7 +35,7 @@ export default function WithdrawPage() {
       }
 
       const data = await response.json();
-      setBalances(data.balances);
+      setBalances(data);
     } catch (error) {
       console.error('Error fetching balances:', error);
       setMessage('Error loading balances');

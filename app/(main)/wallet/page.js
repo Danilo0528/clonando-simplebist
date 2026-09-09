@@ -15,6 +15,7 @@ export default function WalletPage() {
     loading,
     error,
     currentBalance,
+    boundBalance,
     totalEarned,
     totalWithdrawn,
     addTransaction,
@@ -67,6 +68,7 @@ export default function WalletPage() {
       <>
         <WalletSummary 
           balance={currentBalance}
+          boundBalance={boundBalance}
           totalEarned={totalEarned}
           totalWithdrawn={totalWithdrawn}
           onWithdrawClick={handleOpenModal}
@@ -83,7 +85,7 @@ export default function WalletPage() {
       <WithdrawModal 
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
-        balance={currentBalance}
+        balance={boundBalance}
         onWithdrawalSuccess={handleWithdrawalSuccess}
       />
     </div>

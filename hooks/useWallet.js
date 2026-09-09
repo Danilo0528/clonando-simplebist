@@ -7,6 +7,7 @@ export function useWallet() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentBalance, setCurrentBalance] = useState(0);
+  const [boundBalance, setBoundBalance] = useState(0);
   const [totalEarned, setTotalEarned] = useState(0);
   const [totalWithdrawn, setTotalWithdrawn] = useState(0);
 
@@ -31,6 +32,7 @@ export function useWallet() {
 
       const balancesData = await balancesRes.json();
       setCurrentBalance(balancesData.tokenBalance || 0);
+      setBoundBalance(balancesData.boundTokenBalance || 0);
 
       // Fetch withdrawal history
       const withdrawalsRes = await fetch('/api/withdrawal/request', {
@@ -84,6 +86,7 @@ export function useWallet() {
     loading,
     error,
     currentBalance,
+    boundBalance,
     totalEarned,
     totalWithdrawn,
     addTransaction,

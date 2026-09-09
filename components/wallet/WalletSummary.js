@@ -2,7 +2,7 @@
 
 import { FaWallet, FaArrowDown, FaArrowUp } from 'react-icons/fa';
 
-const WalletSummary = ({ balance, totalEarned, totalWithdrawn, onWithdrawClick }) => {
+const WalletSummary = ({ balance, boundBalance, totalEarned, totalWithdrawn, onWithdrawClick }) => {
 
     const formatNumber = (num) => new Intl.NumberFormat('en-US').format(num);
 
@@ -36,6 +36,12 @@ const WalletSummary = ({ balance, totalEarned, totalWithdrawn, onWithdrawClick }
                         <p className="text-lg font-bold text-red-400 flex items-center justify-center gap-1.5">
                            <FaArrowDown/>
                            {formatNumber(totalWithdrawn)}
+                        </p>
+                    </div>
+                    <div>
+                        <h3 className="text-xs text-gray-400 uppercase mb-1">Ready to Withdraw</h3>
+                        <p className="text-lg font-bold text-emerald-400">
+                            {formatNumber(boundBalance)}
                         </p>
                     </div>
                 </div>
